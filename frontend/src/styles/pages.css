@@ -1,0 +1,76 @@
+/* ===== PAGE STYLES ===== */
+.page-container {
+    height: 100vh;
+    width: 100vw;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 10%;
+  }
+  
+  .page-content {
+    max-width: 800px;
+    color: white;
+    z-index: 2;
+  }
+  
+  .page-content h2 {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    background: linear-gradient(to right, #4E01FD, #E81352);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  
+  .page-content h3 {
+    font-size: 2rem;
+    margin-bottom: 2rem;
+    color: white;
+  }
+  
+  .page-content ul {
+    margin-bottom: 3rem;
+    padding-left: 1.5rem;
+  }
+  
+  .page-content li {
+    font-size: 1.2rem;
+    margin-bottom: 1rem;
+    line-height: 1.6;
+  }
+  
+  /* Section Backgrounds with Overlay */
+  .organization {
+    background: linear-gradient(rgba(30, 30, 50, 0.8), rgba(30, 30, 50, 0.8)), 
+                url('/Users/maneadamyan/Desktop/my-app/public/frame14.svg') center/cover;
+  }
+  
+  .collaboration {
+    background: linear-gradient(rgba(40, 30, 60, 0.8), rgba(40, 30, 60, 0.8)), 
+                url('/Users/maneadamyan/Desktop/my-app/public/frame15.svg') center/cover;
+  }
+  
+  .automation {
+    background: linear-gradient(rgba(20, 40, 70, 0.8), rgba(20, 40, 70, 0.8)), 
+                url('/Users/maneadamyan/Desktop/my-app/public/frame16.svg') center/cover;
+  }
+  
+  /* CTA Button */
+  .section-cta {
+    padding: 1rem 2.5rem;
+    background: linear-gradient(90deg, #4E01FD 0%, #E81352 100%);
+    color: white;
+    border: none;
+    border-radius: 25px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+  }
+  
+  .section-cta:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+  }
