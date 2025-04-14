@@ -44,17 +44,17 @@
   /* Section Backgrounds with Overlay */
   .organization {
     background: linear-gradient(rgba(30, 30, 50, 0.8), rgba(30, 30, 50, 0.8)), 
-                url('/Users/maneadamyan/Desktop/my-app/public/frame14.svg') center/cover;
+                url('../../public/images/frame14.svg') center/cover;
   }
   
   .collaboration {
     background: linear-gradient(rgba(40, 30, 60, 0.8), rgba(40, 30, 60, 0.8)), 
-                url('/Users/maneadamyan/Desktop/my-app/public/frame15.svg') center/cover;
+                url('../../public/images/frame15.svg') center/cover;
   }
   
   .automation {
     background: linear-gradient(rgba(20, 40, 70, 0.8), rgba(20, 40, 70, 0.8)), 
-                url('/Users/maneadamyan/Desktop/my-app/public/frame16.svg') center/cover;
+                url('../../public/images/frame16.svg') center/cover;
   }
   
   /* CTA Button */

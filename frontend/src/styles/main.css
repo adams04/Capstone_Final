@@ -78,7 +78,7 @@
   /* ===== HERO SECTION ===== */
   .hero-section {
     height: 100vh;
-    background: url('/Users/maneadamyan/Desktop/my-app/frontend/public/images/frame13.svg') no-repeat center center;
+    background: url('../../public/images/frame13.svg') no-repeat center center;
     background-size: cover;
     position: relative;
   }
@@ -160,7 +160,7 @@
     display: flex;
     justify-content: flex-end; /* Push content to the right */
     align-items: flex-start;   /* Push content to the top */
-    background: url('/Users/maneadamyan/Desktop/my-app/frontend/public/images/frame9.svg') no-repeat center center;
+    background: url('../../public/images/frame9.svg') no-repeat center center;
     background-size: cover;
     padding: 4rem 6rem; /* Space from top and right edge */
   }
