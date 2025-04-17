@@ -15,32 +15,74 @@
   }
   
   /* ===== NAVBAR ===== */
-  .navbar {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 1rem 1rem;
-    position: fixed;
-    width: 85%;
-    max-width: 1200px;
-    left: 50%;
-    transform: translateX(-50%);
-    top: 2rem;
-    background: #301E38;
-    border-radius: 50px;
-    z-index: 1000;
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 1.5rem; /* Reduced vertical padding */
+  position: fixed;
+  width: 85%;
+  max-width: 1200px;
+  left: 50%;
+  transform: translateX(-50%);
+  top: 1rem; /* Reduced from 2rem */
+  background: #301E38;
+  border-radius: 50px;
+  z-index: 1000;
+  height: 60px; /* Fixed height */
+   display: flex;
+  align-items: center;
+}
+
+.logo {
+  font-size: 1.5rem; /* Reduced from 1.8rem */
+  font-weight: 700;
+  color: #B50D8A;
+  line-height: 1; /* Ensures consistent height */
+}
+
+.auth-buttons {
+  display: flex;
+  gap: 1rem;
+  align-items: center; /* Centers children vertically */
+}
+
+.login-btn, .signup-btn {
+  display: inline-flex; /* Ensures consistent alignment */
+  align-items: center;
+  justify-content: center;
+  height: 40px; /* Fixed height for both buttons */
+  border-radius: 25px;
+  padding: 0 1.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  line-height: 1; /* Removes extra line height */
+}
+
+.login-btn {
+  background: transparent;
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.signup-btn {
+  background: linear-gradient(to right, #4E01FD, #E81352);
+  color: white;
+  border: none;
+}
+
+.login-link, .signup-link {
+  display: inline-flex; /* Fixes alignment issues */
+  text-decoration: none;
+}
+  .login-link:hover .login-btn {
+    border-color: rgba(255, 255, 255, 0.6);
   }
   
-  .logo {
-    font-size: 1.8rem;
-    font-weight: 700;
-    color: #B50D8A;
-  }
-  
-  .auth-buttons {
-    display: flex;
-    gap: 1rem;
-    align-items: center;
+  .signup-link:hover .signup-btn {
+    opacity: 0.9;
   }
   
   .login-btn {
@@ -74,6 +116,8 @@
   .signup-btn:hover {
     opacity: 0.9;
   }
+
+  
   
   /* ===== HERO SECTION ===== */
   .hero-section {
@@ -244,4 +288,51 @@
   .signup-link-text:hover {
     text-decoration: underline;
   }
-  
+
+/* ===== BOARD PAGE ===== */
+.board-background {
+  height: 100vh;
+  width: 100vw;
+  display: flex;
+  justify-content: flex-end;
+  align-items: flex-start;
+  background: url('../../public/images/frame9.svg') no-repeat center center;
+  background-size: cover;
+  padding: 8rem 6rem 4rem; /* Increased top padding to push content down */
+}
+
+.board-container {
+  width: 100%;
+  max-width: 450px;
+  padding: 3rem 2.5rem;
+  background: transparent;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 2rem; /* Additional margin to push down further */
+}
+
+.board-title {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: #B50D8A;
+  margin-bottom: 1rem;
+  text-align: center;
+}
+
+.board-input {
+  padding: 1.2rem 1.5rem;
+  border: none;
+  border-radius: 50px;
+  font-size: 1.2rem;
+  width: 350px;
+  background: white;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  margin-top: 1rem; /* Extra space between title and input */
+}
+
+.board-input:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px #B50D8A;
+}

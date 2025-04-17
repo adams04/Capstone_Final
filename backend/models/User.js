@@ -21,9 +21,11 @@ const userSchema = new mongoose.Schema({
 
 // Password hashing middleware
 userSchema.pre('save', async function(next) {
+    // Only hash if password is modified or new
     if (!this.isModified('passwordHash')) return next();
     
     try {
+        // Hash the plain text password
         const salt = await bcrypt.genSalt(10);
         this.passwordHash = await bcrypt.hash(this.passwordHash, salt);
         next();
@@ -31,10 +33,12 @@ userSchema.pre('save', async function(next) {
         next(err);
     }
 });
-
 // Method to compare passwords
 userSchema.methods.comparePassword = async function(candidatePassword) {
+    if (!candidatePassword || !this.passwordHash) {
+      throw new Error('data and hash arguments required');
+    }
     return await bcrypt.compare(candidatePassword, this.passwordHash);
-};
+  };
 
 module.exports = mongoose.model('User', userSchema);

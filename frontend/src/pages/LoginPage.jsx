@@ -1,16 +1,16 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
-import '../styles/main.css';
+import { Link, useNavigate } from 'react-router-dom'; // Add this import
 import { authAPI } from '../services/api';
+import '../styles/main.css';
 
 const LoginPage = () => {
-  // State management using single formData object
   const [formData, setFormData] = useState({
     email: '',
     password: ''
   });
+  const [error, setError] = useState('');
+  const navigate = useNavigate();
 
-  // Unified change handler
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({
@@ -22,12 +22,20 @@ const LoginPage = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const { token, user } = await authAPI.login(formData);
-      console.log('Login successful!', user.email);
-      // Store token and redirect (you'll implement this later)
-      localStorage.setItem('token', token);
+      const response = await authAPI.login({
+        email: formData.email,
+        password: formData.password
+      });
+      
+      // Store the token and user data
+      localStorage.setItem('token', response.token);
+      localStorage.setItem('user', JSON.stringify(response.user));
+      
+      // Force refresh to ensure ProtectedRoute catches the auth change
+      window.location.href = '/board';
+      
     } catch (error) {
-      console.error('Login failed:', error.response?.data || error.message);
+      setError(error.response?.data?.error || 'Login failed');
     }
   };
 
@@ -35,10 +43,11 @@ const LoginPage = () => {
     <div className="login-page">
       <div className="login-form-container">
         <h2 className="login-title">Login</h2>
+        {error && <div className="error-message">{error}</div>}
         <form className="login-form" onSubmit={handleSubmit}>
           <div className="input-group">
             <input
-              type="email"  // Changed from text to email for better validation
+              type="email"
               name="email"
               value={formData.email}
               onChange={handleChange}
@@ -56,7 +65,6 @@ const LoginPage = () => {
               className="login-input"
               placeholder="Password"
               required
-              minLength="6"
             />
           </div>
           <button type="submit" className="login-submit-btn">
