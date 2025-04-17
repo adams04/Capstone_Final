@@ -1,20 +1,39 @@
-const mongoose = require('mongoose');
-const Schema = mongoose.Schema;
+const mongoose = require("mongoose");
 
-const ticketSchema = new Schema({
-    boardId: { type: Schema.Types.ObjectId, ref: 'Board', required: true },
+const ticketSchema = new mongoose.Schema({
     title: { type: String, required: true },
-    description: { type: String },
-    assignedTo: [{ type: Schema.Types.ObjectId, ref: 'User' }],
-    status: { type: String, enum: ['To Do', 'In Progress', 'Done'], default: 'To Do' },
-    priority: { type: String, enum: ['Low', 'Medium', 'High'], default: 'Medium' },
-    deadline: { type: Date },
-    color: { type: String },
-    voiceNotes: [{ type: Schema.Types.ObjectId, ref: 'VoiceNote' }],
-    comments: [{ type: Schema.Types.ObjectId, ref: 'Comment' }],
-    chatMessages: [{ type: Schema.Types.ObjectId, ref: 'ChatMessage' }],
-    whiteboardId: { type: Schema.Types.ObjectId, ref: 'Whiteboard' },
-    createdAt: { type: Date, default: Date.now }
-});
+    description: String,
+    status: {
+        type: String,
+        enum: ["To Do", "In Progress", "Done"],
+        default: "To Do"
+    },
+    assignedTo: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User"
+    }],
+    boardId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Board",
+        required: true
+    },
+    priority: {
+        type: String,
+        enum: ["Low", "Medium", "High"],
+        default: "Medium"
+    },
+    deadline: Date,
+    comments: [{
+        user: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "User"
+        },
+        message: String,
+        createdAt: {
+            type: Date,
+            default: Date.now
+        }
+    }]
+}, { timestamps: true });
 
-module.exports = mongoose.model('Ticket', ticketSchema);
+module.exports = mongoose.model("Ticket", ticketSchema);
