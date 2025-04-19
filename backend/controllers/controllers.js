@@ -83,10 +83,9 @@ const login = async (req, res) => {
 // Create board
 const createBoard = async (req, res) => {
     try {
-        const { name, ownerEmail, memberEmails } = req.body;
+        const { name, memberEmails } = req.body;
+        const owner = req.user;
 
-        // Check if owner exists
-        const owner = await User.findOne({ email: ownerEmail });
         if (!owner) {
             return res.status(400).send("Owner not found.");
         }
@@ -124,9 +123,7 @@ const createBoard = async (req, res) => {
 // Get boards
 const myBoards =  async (req, res) => {
     try {
-        const userEmail = req.params.email;
-
-        const user = await User.findOne({ email: userEmail });
+        const user = req.user;
 
         if (!user) {
             return res.status(404).send("User not found.");
@@ -144,6 +141,94 @@ const myBoards =  async (req, res) => {
         res.status(500).send("Error fetching boards.");
     }
 };
+
+// get single board
+const board =  async (req, res) => {
+    try {
+        const board = await Board.findOne({ _id: req.params.boardId, user: req.user.userId });
+
+        if (!board) {
+            return res.status(404).json({ message: 'Board not found or not authorized' });
+        }
+
+        res.json(board);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Server error' });
+    }
+};
+
+// Update board
+const updateBoard = async (req, res) => {
+    const { name, addMembers = [], removeMembers = [] } = req.body;
+
+    try {
+        const board = await Board.findOne({
+            _id: req.params.boardId,
+            $or: [
+                { owner: req.user._id },
+                { members: req.user._id }
+            ]
+        });
+
+        if (!board) {
+            return res.status(404).json({ message: 'Board not found or not authorized' });
+        }
+
+        if (name !== undefined) board.name = name;
+
+        // Make sure all IDs are strings for comparison
+        const currentMemberIds = board.members.map(m => m.toString());
+
+        // Add members
+        addMembers.forEach(memberId => {
+            if (!currentMemberIds.includes(memberId)) {
+                board.members.push(memberId); // It's fine to push a string; Mongoose will cast it
+            }
+        });
+
+        // Remove members
+        board.members = board.members.filter(
+            member => !removeMembers.includes(member.toString())
+        );
+
+        await board.save();
+
+        res.json(board);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Server error' });
+    }
+};
+
+
+
+
+// delete board
+const deleteBoard = async (req, res) => {
+    try {
+        const { boardId } = req.params;
+
+        if (!mongoose.Types.ObjectId.isValid(boardId)) {
+            return res.status(400).send("Invalid board ID.");
+        }
+
+        const board = await Board.findByIdAndDelete(boardId);
+
+        if (!board) {
+            return res.status(404).send("Board not found.");
+        }
+
+        // Delete all tickets belonging to this board
+        await Ticket.deleteMany({ boardId: board._id });
+
+        res.status(200).send(`Board "${board.name}" and its tickets were deleted successfully.`);
+    } catch (error) {
+        console.error("Error deleting board:", error);
+        res.status(500).send("Error deleting board.");
+    }
+};
+
 
 // Create ticket
 const createTicket = async (req, res) => {
@@ -226,7 +311,33 @@ const getTickets = async (req, res) => {
     }
 };
 
+// delete ticket
+const deleteTicket = async (req, res) => {
+    console.log("DELETE ticket endpoint hit");
+    try {
+        const { ticketId } = req.params;
+
+        if (!mongoose.Types.ObjectId.isValid(ticketId)) {
+            return res.status(400).send("Invalid ticket ID.");
+        }
+
+        const deleted = await Ticket.findByIdAndDelete(ticketId);
+
+        if (!deleted) {
+            return res.status(404).send("Ticket not found.");
+        }
+
+        res.status(200).send(`Ticket "${deleted.title}" deleted successfully.`);
+    } catch (error) {
+        console.error("Error deleting ticket:", error);
+        res.status(500).send("Error deleting ticket.");
+    }
+};
 
 
-module.exports = { register, login,createBoard, myBoards,createTicket,getTickets };
+
+
+module.exports = { register, login,createBoard,
+    myBoards,deleteBoard,createTicket,getTickets,deleteTicket,
+board, updateBoard};
 
