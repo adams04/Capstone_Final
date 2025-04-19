@@ -12,10 +12,8 @@ const LandingPage = () => {
       <div className="navbar">
         <div className="logo">TaskFlow</div>
         <div className="auth-buttons">
-          <Link to="/login" className="login-link">
-            <button className="login-btn">Log in</button>
-          </Link>
-          <button className="signup-btn">Sign up</button>
+          <Link to="/login" className="login-btn">Log in</Link>
+          <Link to="/signup" className="signup-btn">Sign up</Link>
         </div>
       </div>
 

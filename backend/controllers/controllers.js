@@ -8,55 +8,59 @@ const mongoose = require('mongoose');
 
 const register = async (req, res) => {
     try {
-        console.log('[DEBUG] Received registration data:', req.body); // Add this
+        const { name, surname, email, password, dateOfBirth } = req.body; // Changed from passwordHash to password
         
-        const { name, surname, email, passwordHash, dateOfBirth } = req.body;
-        
-        console.log('[DEBUG] Checking for existing user:', email); // Add this
         const existingUser = await User.findOne({ email });
-        
         if (existingUser) {
-            console.log('[DEBUG] User already exists:', existingUser); // Add this
             return res.status(400).json({ error: 'Email already in use' });
         }
 
-        console.log('[DEBUG] Creating new user...'); // Add this
         const user = new User({
             name,
             surname,
             email,
-            passwordHash,
+            passwordHash: password, // Let mongoose middleware hash it
             dateOfBirth,
             settings: { theme: 'light' }
         });
 
         await user.save();
-        console.log('[DEBUG] User saved to DB:', user); // Add this
+        
+        // Generate token after successful registration
+        const token = jwt.sign(
+            { userId: user._id },
+            process.env.JWT_SECRET,
+            { expiresIn: '1h' }
+        );
 
-        // ... rest of your code ...
+        res.status(201).json({
+            token,
+            user: {
+                id: user._id,
+                name: user.name,
+                email: user.email
+            }
+        });
     } catch (error) {
-        console.error('[ERROR] Registration failed:', error); // Enhanced error log
         res.status(500).json({ error: 'Registration failed: ' + error.message });
     }
 };
 
 const login = async (req, res) => {
     try {
-        const { email, passwordHash } = req.body;
+        const { email, password } = req.body; // Changed from passwordHash to password
         
-        // Find user
         const user = await User.findOne({ email });
         if (!user) {
             return res.status(401).json({ error: 'Invalid credentials' });
         }
 
-        // Check password using the model method
-        const isMatch = await user.comparePassword(passwordHash);
+        // Compare plain text password with stored hash
+        const isMatch = await user.comparePassword(password);
         if (!isMatch) {
             return res.status(401).json({ error: 'Invalid credentials' });
         }
 
-        // Generate JWT token
         const token = jwt.sign(
             { userId: user._id },
             process.env.JWT_SECRET,
@@ -64,14 +68,11 @@ const login = async (req, res) => {
         );
 
         res.json({
-            success: true,
             token,
             user: {
                 id: user._id,
                 name: user.name,
-                email: user.email,
-                profileImage: user.profileImage,
-                settings: user.settings
+                email: user.email
             }
         });
     } catch (error) {
@@ -228,3 +229,4 @@ const getTickets = async (req, res) => {
 
 
 module.exports = { register, login,createBoard, myBoards,createTicket,getTickets };
+

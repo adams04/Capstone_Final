@@ -1,15 +1,17 @@
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
-import '../styles/main.css';
+import React, { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { authAPI } from '../services/api';
+import '../styles/main.css';
 
 const SignUpPage = () => {
   const [formData, setFormData] = useState({
     name: '',
-    surname: '',
     email: '',
-    password: ''
+    password: '',
+    confirmPassword: ''
   });
+  const [error, setError] = useState('');
+  const navigate = useNavigate();
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -21,71 +23,84 @@ const SignUpPage = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (formData.password !== formData.confirmPassword) {
+      setError('Passwords do not match');
+      return;
+    }
+    
     try {
-      // Transform data to match backend expectations
-      const registrationData = {
+      const response = await authAPI.register({
         name: formData.name,
-        surname: formData.surname || 'Not provided', // Default value
         email: formData.email,
-        passwordHash: formData.password // Frontend uses 'password' field
-      };
-      
-      const { token } = await authAPI.register(registrationData);
-    } catch (error) {
-      console.error('[FRONTEND] Full error:', {
-        message: error.message,
-        response: error.response?.data,
-        stack: error.stack
+        password: formData.password
       });
+      
+      localStorage.setItem('token', response.token);
+      localStorage.setItem('user', JSON.stringify(response.user));
+      navigate('/board');
+    } catch (error) {
+      setError(error.response?.data?.error || 'Registration failed');
     }
   };
 
   return (
-    <div className="login-page"> {/* Same container as login for consistency */}
-      <div className="login-form-container"> {/* Reusing login styles */}
-        <h2 className="login-title">Sign Up</h2>
-        <form className="login-form" onSubmit={handleSubmit}>
+    <div className="login-page"> {/* Use login-page class for consistent layout */}
+      <div className="login-form-container"> {/* Use login-form-container for consistent styling */}
+        <h2 className="login-title">Sign Up</h2> {/* Use login-title class */}
+        {error && <div className="error-message">{error}</div>}
+        
+        <form className="login-form" onSubmit={handleSubmit}> {/* Use login-form class */}
           <div className="input-group">
-            <label className="input-label">Full Name</label>
             <input
               type="text"
               name="name"
               className="login-input"
-              placeholder="Enter your name"
+              placeholder="Full Name"
               value={formData.name}
               onChange={handleChange}
               required
             />
           </div>
           <div className="input-group">
-            <label className="input-label">Email</label>
             <input
               type="email"
               name="email"
               className="login-input"
-              placeholder="Enter your email"
+              placeholder="Email"
               value={formData.email}
               onChange={handleChange}
               required
             />
           </div>
           <div className="input-group">
-            <label className="input-label">Password</label>
             <input
               type="password"
               name="password"
               className="login-input"
-              placeholder="Create a password"
+              placeholder="Password"
               value={formData.password}
               onChange={handleChange}
               required
               minLength="6"
             />
           </div>
+          <div className="input-group">
+            <input
+              type="password"
+              name="confirmPassword"
+              className="login-input"
+              placeholder="Confirm Password"
+              value={formData.confirmPassword}
+              onChange={handleChange}
+              required
+            />
+          </div>
+          
           <button type="submit" className="login-submit-btn">
             Create Account
           </button>
         </form>
+        
         <p className="signup-link">
           Already have an account? <Link to="/login" className="signup-link-text">Log in</Link>
         </p>
@@ -94,4 +109,4 @@ const SignUpPage = () => {
   );
 };
 
-export { SignUpPage };
+export default SignUpPage;

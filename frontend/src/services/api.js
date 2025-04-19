@@ -1,7 +1,6 @@
-// frontend/src/services/api.js
 import axios from 'axios';
 
-const api = axios.create({
+const API = axios.create({
   baseURL: '/api', // Proxy to backend (configured in frontend/package.json)
   timeout: 10000, // Increased timeout
   headers: {
@@ -10,7 +9,7 @@ const api = axios.create({
 });
 
 // Add request interceptor for auth token
-api.interceptors.request.use(config => {
+API.interceptors.request.use(config => {
   const token = localStorage.getItem('token');
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
@@ -20,23 +19,23 @@ api.interceptors.request.use(config => {
 
 // Enhanced API functions
 export const authAPI = {
-  register: async (userData) => {
-    try {
-      const { data } = await api.post('/auth/register', userData);
-      localStorage.setItem('token', data.token);
-      return data;
-    } catch (error) {
-      throw error.response?.data || { message: 'Registration failed' };
-    }
-  },
-  
   login: async (credentials) => {
     try {
-      const { data } = await api.post('/auth/login', credentials);
+      const { data } = await API.post('/auth/login', credentials);
       localStorage.setItem('token', data.token);
       return data;
     } catch (error) {
       throw error.response?.data || { message: 'Login failed' };
+    }
+  },
+
+  register: async (userData) => {
+    try {
+      const { data } = await API.post('/auth/register', userData);
+      localStorage.setItem('token', data.token);
+      return data;
+    } catch (error) {
+      throw error.response?.data || { message: 'Registration failed' };
     }
   },
 
@@ -48,7 +47,7 @@ export const authAPI = {
 export const protectedAPI = {
   getData: async () => {
     try {
-      const { data } = await api.get('/protected/data');
+      const { data } = await API.get('/protected/data');
       return data;
     } catch (error) {
       throw error.response?.data || { message: 'Failed to fetch protected data' };
@@ -57,7 +56,7 @@ export const protectedAPI = {
 };
 
 // Global error handling
-api.interceptors.response.use(
+API.interceptors.response.use(
   response => response,
   error => {
     if (error.response?.status === 401) {
@@ -67,3 +66,5 @@ api.interceptors.response.use(
     return Promise.reject(error);
   }
 );
+
+export default API;
