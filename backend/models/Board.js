@@ -1,12 +1,31 @@
 const mongoose = require('mongoose');
-const Schema = mongoose.Schema;
 
-const boardSchema = new Schema({
-    name: { type: String, required: true },
-    owner: { type: Schema.Types.ObjectId, ref: 'User', required: true },
-    members: [{ type: Schema.Types.ObjectId, ref: 'User' }],
-    tickets: [{ type: Schema.Types.ObjectId, ref: 'Ticket' }],
-    createdAt: { type: Date, default: Date.now }
+const boardSchema = new mongoose.Schema({
+    name: {
+        type: String,
+        required: true,
+    },
+    owner: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+        required: true,
+    },
+    members: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+    }],
+    tickets: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Ticket',
+    }],
+    createdAt: {
+        type: Date,
+        default: Date.now,
+    },
+    updatedAt: {
+        type: Date,
+        default: Date.now,
+    }
 });
 
 module.exports = mongoose.model('Board', boardSchema);
