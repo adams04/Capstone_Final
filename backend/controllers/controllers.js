@@ -5,7 +5,7 @@ const Ticket = require('../models/Ticket');
 const mongoose = require('mongoose');
 
 
-
+// Register
 const register = async (req, res) => {
     try {
         const { name, surname, email, password, dateOfBirth } = req.body; // Changed from passwordHash to password
@@ -46,6 +46,8 @@ const register = async (req, res) => {
     }
 };
 
+
+// Login
 const login = async (req, res) => {
     try {
         const { email, password } = req.body; // Changed from passwordHash to password
@@ -79,6 +81,61 @@ const login = async (req, res) => {
         res.status(500).json({ error: 'Login failed: ' + error.message });
     }
 };
+
+
+// Get User Profile
+const getUserProfile = async (req, res) => {
+    try {
+        const user = await User.findById(req.user._id).select('-passwordHash');
+        if (!user) return res.status(404).send("User not found.");
+        res.status(200).json(user);
+    } catch (err) {
+        console.error("Error fetching profile:", err);
+        res.status(500).send("Error fetching user profile.");
+    }
+};
+
+
+// Update User Profile
+const updateUserProfile = async (req, res) => {
+    try {
+        const updates = req.body;
+
+        // Prevent password change via this route
+        if (updates.passwordHash) {
+            return res.status(400).send("Use a dedicated route to change password.");
+        }
+
+        const updatedUser = await User.findByIdAndUpdate(
+            req.user._id,
+            updates,
+            { new: true, runValidators: true }
+        ).select('-passwordHash');
+
+        if (!updatedUser) return res.status(404).send("User not found.");
+
+        res.status(200).json(updatedUser);
+    } catch (err) {
+        console.error("Error updating profile:", err);
+        res.status(500).send("Error updating user profile.");
+    }
+};
+
+
+// Delete User
+const deleteUser = async (req, res) => {
+    try {
+        const deletedUser = await User.findByIdAndDelete(req.user._id);
+
+        if (!deletedUser) return res.status(404).send("User not found.");
+
+        res.status(200).send("User deleted successfully.");
+    } catch (err) {
+        console.error("Error deleting user:", err);
+        res.status(500).send("Error deleting user.");
+    }
+};
+
 
 // Create board
 const createBoard = async (req, res) => {
@@ -141,6 +198,7 @@ const myBoards =  async (req, res) => {
         res.status(500).send("Error fetching boards.");
     }
 };
+
 
 // get single board
 const board =  async (req, res) => {
@@ -523,5 +581,6 @@ const removeUserFromTicket = async (req, res) => {
 module.exports = { register, login,createBoard,
     myBoards,deleteBoard,createTicket,getTickets,deleteTicket,
 board, updateBoard,getSingleTicket, updateTicket,assignUserToTicket,
-removeUserFromTicket};
+removeUserFromTicket,getUserProfile,updateUserProfile, updateUserProfile,
+deleteUser};
 

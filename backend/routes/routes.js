@@ -4,13 +4,16 @@ const authMiddleware = require('../middleware/authMiddleware');
 const { register, login, createBoard, myBoards, deleteBoard,
     createTicket, getTickets,deleteTicket, board,updateBoard,
     getSingleTicket,updateTicket,assignUserToTicket,
-removeUserFromTicket} = require('../controllers/controllers');
+removeUserFromTicket,getUserProfile,updateUserProfile,
+    deleteUser} = require('../controllers/controllers');
 
 
-//registration and login
+//User
 router.post('/register', register);
 router.post('/login', login);
-
+router.get('/user-profile', authMiddleware, getUserProfile);
+router.put('/update-profile', authMiddleware, updateUserProfile);
+router.delete('/delete-user', authMiddleware, deleteUser);
 
 // board
 router.post('/create-board',authMiddleware, createBoard)
