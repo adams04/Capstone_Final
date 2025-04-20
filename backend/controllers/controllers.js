@@ -244,7 +244,8 @@ const createTicket = async (req, res) => {
         // Validate assigned users
         let assignedUserIds = [];
         if (assignedToEmails && assignedToEmails.length > 0) {
-            const assignedUsers = await User.find({email: {$in: assignedToEmails}});
+            const assignedUsers = await User.find({email: {$in: assignedToEmails
+                        .map(email => email.toLowerCase())}});
 
             if (assignedUsers.length !== assignedToEmails.length) {
                 return res.status(400).send("Some assigned users not found.");
@@ -275,7 +276,9 @@ const createTicket = async (req, res) => {
 
         await ticket.save();
 
-        res.status(201).send(`Ticket "${title}" created successfully.`);
+        const populatedTicket = await Ticket.findById(ticket._id).populate("assignedTo", "name email");
+        res.status(201).json(populatedTicket);
+
     } catch (error) {
         console.error("Error creating ticket:", error);
         res.status(500).send("Error creating ticket.");
@@ -311,6 +314,104 @@ const getTickets = async (req, res) => {
     }
 };
 
+// Get single ticket
+const getSingleTicket = async (req, res) => {
+    try {
+        const { ticketId } = req.params;
+
+        // Validate ticket ID format
+        if (!mongoose.Types.ObjectId.isValid(ticketId)) {
+            return res.status(400).send("Invalid ticket ID format.");
+        }
+
+        // Find ticket with populated fields
+        const ticket = await Ticket.findById(ticketId)
+            .populate("assignedTo", "name email")
+            .populate("comments.user", "name email");
+
+        if (!ticket) {
+            return res.status(404).send("Ticket not found.");
+        }
+
+        res.status(200).json(ticket);
+    } catch (error) {
+        console.error("Error fetching ticket:", error);
+        res.status(500).send("Error fetching ticket.");
+    }
+};
+
+// update ticket
+const updateTicket = async (req, res) => {
+    try {
+        const { ticketId } = req.params;
+        const {
+            title,
+            description,
+            status,
+            priority,
+            deadline,
+            assignedToEmails
+        } = req.body;
+
+        // Validate ticket ID
+        if (!mongoose.Types.ObjectId.isValid(ticketId)) {
+            return res.status(400).send("Invalid ticket ID.");
+        }
+
+        // Find the ticket
+        const ticket = await Ticket.findById(ticketId);
+        if (!ticket) {
+            return res.status(404).send("Ticket not found.");
+        }
+
+        // Find the board to validate assigned users
+        const board = await Board.findById(ticket.boardId);
+        if (!board) {
+            return res.status(404).send("Board not found.");
+        }
+
+        // Update assignedTo if emails are provided
+        let assignedUserIds = ticket.assignedTo; // Keep current users if not updated
+        if (assignedToEmails && assignedToEmails.length > 0) {
+            const assignedUsers = await User.find({ email: { $in: assignedToEmails } });
+
+            if (assignedUsers.length !== assignedToEmails.length) {
+                return res.status(400).send("Some assigned users not found.");
+            }
+
+            const validUsers = assignedUsers.filter(user =>
+                board.members.includes(user._id) || board.owner.equals(user._id)
+            );
+
+            if (validUsers.length !== assignedUsers.length) {
+                return res.status(403).send("One or more assigned users are not part of this board.");
+            }
+
+            assignedUserIds = validUsers.map(user => user._id);
+        }
+
+        // Update ticket fields
+        if (title !== undefined) ticket.title = title;
+        if (description !== undefined) ticket.description = description;
+        if (status !== undefined) ticket.status = status;
+        if (priority !== undefined) ticket.priority = priority;
+        if (deadline !== undefined) ticket.deadline = deadline;
+        ticket.assignedTo = assignedUserIds;
+
+        await ticket.save();
+
+        // Populate updated ticket
+        const updatedTicket = await Ticket.findById(ticket._id).populate("assignedTo", "name email");
+
+        res.status(200).json(updatedTicket);
+    } catch (error) {
+        console.error("Error updating ticket:", error);
+        res.status(500).send("Error updating ticket.");
+    }
+};
+
+
+
 // delete ticket
 const deleteTicket = async (req, res) => {
     console.log("DELETE ticket endpoint hit");
@@ -335,9 +436,92 @@ const deleteTicket = async (req, res) => {
 };
 
 
+// assign user to a ticket
+const assignUserToTicket = async (req, res) => {
+    try {
+        const { ticketId } = req.params;
+        const { email } = req.body;
+
+        if (!mongoose.Types.ObjectId.isValid(ticketId)) {
+            return res.status(400).send("Invalid ticket ID.");
+        }
+
+        const ticket = await Ticket.findById(ticketId).populate("boardId");
+        if (!ticket) {
+            return res.status(404).send("Ticket not found.");
+        }
+
+        const user = await User.findOne({ email });
+        if (!user) {
+            return res.status(404).send("User not found.");
+        }
+
+        // Check if user is already assigned
+        if (ticket.assignedTo.includes(user._id)) {
+            return res.status(400).send("User is already assigned to this ticket.");
+        }
+
+        // Check if user is part of the board
+        const board = ticket.boardId;
+        if (!board.members.includes(user._id) && !board.owner.equals(user._id)) {
+            return res.status(403).send("User is not a member of the board.");
+        }
+
+        // Assign user
+        ticket.assignedTo.push(user._id);
+        await ticket.save();
+
+        const updated = await Ticket.findById(ticketId).populate("assignedTo", "name email");
+        res.status(200).json(updated);
+    } catch (error) {
+        console.error("Error assigning user:", error);
+        res.status(500).send("Internal server error.");
+    }
+};
+
+
+//remove user from the ticket
+const removeUserFromTicket = async (req, res) => {
+    try {
+        const { ticketId } = req.params;
+        const { email } = req.body;
+
+        if (!mongoose.Types.ObjectId.isValid(ticketId)) {
+            return res.status(400).send("Invalid ticket ID.");
+        }
+
+        const ticket = await Ticket.findById(ticketId);
+        if (!ticket) {
+            return res.status(404).send("Ticket not found.");
+        }
+
+        const user = await User.findOne({ email });
+        if (!user) {
+            return res.status(404).send("User not found.");
+        }
+
+        // Check if user is assigned
+        if (!ticket.assignedTo.includes(user._id)) {
+            return res.status(400).send("User is not assigned to this ticket.");
+        }
+
+        // Remove user
+        ticket.assignedTo = ticket.assignedTo.filter(
+            (userId) => !userId.equals(user._id)
+        );
+        await ticket.save();
+
+        const updated = await Ticket.findById(ticketId).populate("assignedTo", "name email");
+        res.status(200).json(updated);
+    } catch (error) {
+        console.error("Error removing user:", error);
+        res.status(500).send("Internal server error.");
+    }
+};
 
 
 module.exports = { register, login,createBoard,
     myBoards,deleteBoard,createTicket,getTickets,deleteTicket,
-board, updateBoard};
+board, updateBoard,getSingleTicket, updateTicket,assignUserToTicket,
+removeUserFromTicket};
 
