@@ -20,11 +20,11 @@ const LandingPage = () => {
       {/* Hero Content */}
       <div className="hero-content">
         <div className="titles">
-          <h2 className="main-title">Turn Ideas Into Action</h2>
+          <h2 className="main-title">Turn Ideas Into Actions Use</h2>
           <h2 className="main-title">
-            Use <span style={{ color: '#B50D8A' }}>TaskFlow</span>'s Smart
+             <span style={{ color: '#B50D8A' }}>TaskFlow</span>'s Smart Task
           </h2>
-          <h2 className="main-title">Task Management</h2>
+          <h2 className="main-title">Management</h2>
         </div>
 
         <p className="description">

@@ -1,14 +1,16 @@
 import axios from 'axios';
 
 const API = axios.create({
-  baseURL: '/api', // Proxy to backend (configured in frontend/package.json)
-  timeout: 10000, // Increased timeout
+  baseURL: process.env.NODE_ENV === 'development' 
+    ? 'http://localhost:5001/api' 
+    : '/api', 
+  timeout: 10000,
   headers: {
     'Content-Type': 'application/json',
   }
 });
 
-// Add request interceptor for auth token
+// Request interceptor
 API.interceptors.request.use(config => {
   const token = localStorage.getItem('token');
   if (token) {
@@ -17,54 +19,57 @@ API.interceptors.request.use(config => {
   return config;
 });
 
-// Enhanced API functions
-export const authAPI = {
-  login: async (credentials) => {
-    try {
-      const { data } = await API.post('/auth/login', credentials);
-      localStorage.setItem('token', data.token);
-      return data;
-    } catch (error) {
-      throw error.response?.data || { message: 'Login failed' };
-    }
-  },
-
-  register: async (userData) => {
-    try {
-      const { data } = await API.post('/auth/register', userData);
-      localStorage.setItem('token', data.token);
-      return data;
-    } catch (error) {
-      throw error.response?.data || { message: 'Registration failed' };
-    }
-  },
-
-  logout: () => {
-    localStorage.removeItem('token');
-  }
-};
-
-export const protectedAPI = {
-  getData: async () => {
-    try {
-      const { data } = await API.get('/protected/data');
-      return data;
-    } catch (error) {
-      throw error.response?.data || { message: 'Failed to fetch protected data' };
-    }
-  }
-};
-
-// Global error handling
+// Response interceptor
 API.interceptors.response.use(
   response => response,
   error => {
     if (error.response?.status === 401) {
       localStorage.removeItem('token');
-      window.location.href = '/login'; // Redirect if unauthorized
+      window.location.href = '/login';
     }
     return Promise.reject(error);
   }
 );
+
+// API Groups
+export const authAPI = {
+  login: async (credentials) => {
+    const { data } = await API.post('/auth/login', credentials);
+    localStorage.setItem('token', data.token);
+    return data;
+  },
+  register: async (userData) => {
+    const { data } = await API.post('/auth/register', userData);
+    localStorage.setItem('token', data.token);
+    return data;
+  },
+  logout: () => {
+    localStorage.removeItem('token');
+  }
+};
+
+export const boardAPI = {
+  create: async (boardData) => {
+    const { data } = await API.post('/auth/create-board', boardData);
+    return data;
+  },
+  getAll: async () => {
+    const { data } = await API.get('/auth/boards');
+    return data;
+  },
+  getByUser: async (email) => {
+    const { data } = await API.get(`/auth/users/${email}/boards`);
+    return data;
+  },
+  updateBoard: async (boardId, updateData) => {
+    const { data } = await API.put(`/auth/${boardId}`, updateData);
+    return data;
+  },
+  // MODIFIED: Fix the delete endpoint to match your backend route
+  delete: async (boardId) => {
+    const { data } = await API.delete(`/auth/delete-board/${boardId}`);
+    return data;
+  }
+};
 
 export default API;

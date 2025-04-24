@@ -147,20 +147,19 @@ const createBoard = async (req, res) => {
             return res.status(400).send("Owner not found.");
         }
 
-        // Check for duplicate board name for the same owner
+        // Check for duplicate board name
         const existingBoard = await Board.findOne({ name: name, owner: owner._id });
         if (existingBoard) {
-            return res.status(400).send(`You already have a board named "${name}". Please choose a different name.`);
+            return res.status(400).send(`You already have a board named "${name}".`);
         }
 
         // Find all members by email
         const members = await User.find({ email: { $in: memberEmails } });
-
         if (members.length !== memberEmails.length) {
             return res.status(400).send("Some member emails were not found.");
         }
 
-        // Create the board
+        // Create and save the board
         const board = new Board({
             name,
             owner: owner._id,
@@ -170,7 +169,8 @@ const createBoard = async (req, res) => {
 
         await board.save();
 
-        res.status(201).send(`Board "${name}" created successfully.`);
+        // ✅ Return the full board object (with _id, name, etc.)
+        res.status(201).json(board); // Changed from .send() to .json()
     } catch (error) {
         console.error(error);
         res.status(500).send("Error creating board.");
@@ -219,45 +219,42 @@ const board =  async (req, res) => {
 // Update board
 const updateBoard = async (req, res) => {
     const { name, addMembers = [], removeMembers = [] } = req.body;
-
+  
     try {
-        const board = await Board.findOne({
-            _id: req.params.boardId,
-            $or: [
-                { owner: req.user._id },
-                { members: req.user._id }
-            ]
-        });
-
-        if (!board) {
-            return res.status(404).json({ message: 'Board not found or not authorized' });
-        }
-
-        if (name !== undefined) board.name = name;
-
-        // Make sure all IDs are strings for comparison
-        const currentMemberIds = board.members.map(m => m.toString());
-
-        // Add members
-        addMembers.forEach(memberId => {
-            if (!currentMemberIds.includes(memberId)) {
-                board.members.push(memberId); // It's fine to push a string; Mongoose will cast it
-            }
-        });
-
-        // Remove members
-        board.members = board.members.filter(
-            member => !removeMembers.includes(member.toString())
-        );
-
-        await board.save();
-
-        res.json(board);
+      const board = await Board.findOne({
+        _id: req.params.boardId,
+        $or: [{ owner: req.user._id }, { members: req.user._id }]
+      });
+  
+      if (!board) {
+        return res.status(404).json({ message: 'Board not found or not authorized' });
+      }
+  
+      if (name !== undefined) board.name = name;
+  
+      // Convert emails to user IDs
+      const usersToAdd = await User.find({ email: { $in: addMembers } });
+      const userIdsToAdd = usersToAdd.map(user => user._id);
+  
+      // Add new members
+      board.members = [...new Set([...board.members, ...userIdsToAdd])];
+  
+      // Remove members
+      const usersToRemove = await User.find({ email: { $in: removeMembers } });
+      const userIdsToRemove = usersToRemove.map(user => user._id);
+      board.members = board.members.filter(
+        memberId => !userIdsToRemove.includes(memberId.toString())
+      );
+  
+      await board.save();
+  
+      res.json(board);
     } catch (error) {
-        console.error(error);
-        res.status(500).json({ message: 'Server error' });
+      console.error(error);
+      res.status(500).json({ message: 'Server error' });
     }
-};
+  };
+  
 
 
 
