@@ -22,6 +22,14 @@ const boardSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Ticket',
     }],
+    ticketCount: {
+        type: Number,
+        default: 0,
+    },
+    completedTicketCount: {
+        type: Number,
+        default: 0,
+    },
     createdAt: {
         type: Date,
         default: Date.now,
