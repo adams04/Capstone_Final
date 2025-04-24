@@ -194,7 +194,7 @@ const deleteUser = async (req, res) => {
 // Create board
 const createBoard = async (req, res) => {
     try {
-        const { name, memberEmails } = req.body;
+        const { name, memberEmails,description } = req.body;
         const owner = req.user;
 
         if (!owner) {
@@ -218,6 +218,7 @@ const createBoard = async (req, res) => {
             name,
             owner: owner._id,
             members: members.map(m => m._id),
+            description: description,
             tickets: []
         });
 
@@ -292,7 +293,7 @@ const board =  async (req, res) => {
 
 // Update board
 const updateBoard = async (req, res) => {
-    const { name, addMembers = [], removeMembers = [] } = req.body;
+    const { name, description, addMembers = [], removeMembers = [] } = req.body;
   
     try {
       const board = await Board.findOne({
@@ -305,6 +306,7 @@ const updateBoard = async (req, res) => {
       }
   
       if (name !== undefined) board.name = name;
+      if (description !== undefined) board.description = description;
   
       // Convert emails to user IDs
       const usersToAdd = await User.find({ email: { $in: addMembers } });
