@@ -10,6 +10,10 @@ const boardSchema = new mongoose.Schema({
         ref: 'User',
         required: true,
     },
+    description: {
+        type: String,
+        default: '',
+    },
     members: [{
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
