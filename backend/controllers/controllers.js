@@ -426,8 +426,14 @@ const createTicket = async (req, res) => {
 
         await ticket.save();
 
+        board.ticketCount = (board.ticketCount || 0) + 1;
+        if (ticket.status === 'Done') {
+            board.completedTicketCount = (board.completedTicketCount || 0) + 1;
+        }
+        await board.save();
+
         // Notify all assigned users
-        const notificationResults = await notifyAssignedUsers(assignedUserIds, title);
+        await notifyAssignedUsers(assignedUserIds, title);
 
         const populatedTicket = await Ticket.findById(ticket._id).populate("assignedTo", "name email");
         res.status(201).json(populatedTicket);
@@ -543,6 +549,8 @@ const updateTicket = async (req, res) => {
             assignedUserIds = validUsers.map(user => user._id);
         }
 
+        const oldStatus = ticket.status;
+
         // Update ticket fields
         if (title !== undefined) ticket.title = title;
         if (description !== undefined) ticket.description = description;
@@ -553,6 +561,14 @@ const updateTicket = async (req, res) => {
 
         await ticket.save();
 
+        if (status !== undefined && status !== oldStatus) {
+            if (status === 'Done' && oldStatus !== 'Done') {
+                board.completedTicketCount = (board.completedTicketCount || 0) + 1;
+            } else if (oldStatus === 'Done' && status !== 'Done') {
+                board.completedTicketCount = Math.max(0, (board.completedTicketCount || 0) - 1);
+            }
+            await board.save();
+        }
         // Notify all assigned users
         const notificationResults = await notifyAssignedUsers(assignedUserIds, title);
 
@@ -578,13 +594,25 @@ const deleteTicket = async (req, res) => {
             return res.status(400).send("Invalid ticket ID.");
         }
 
-        const deleted = await Ticket.findByIdAndDelete(ticketId);
-
-        if (!deleted) {
+        // Find the ticket first to get boardId
+        const ticket = await Ticket.findById(ticketId);
+        if (!ticket) {
             return res.status(404).send("Ticket not found.");
         }
 
-        res.status(200).send(`Ticket "${deleted.title}" deleted successfully.`);
+        await Ticket.findByIdAndDelete(ticketId);
+
+        const board = await Board.findById(ticket.boardId);
+        if (board) {
+            board.ticketCount = Math.max(0, board.ticketCount - 1);
+
+            if (ticket.status === 'Done') {
+                board.completedTicketCount = Math.max(0, (board.completedTicketCount || 0) - 1);
+            }
+            await board.save();
+        }
+
+        res.status(200).send(`Ticket "${ticket.title}" deleted successfully.`);
     } catch (error) {
         console.error("Error deleting ticket:", error);
         res.status(500).send("Error deleting ticket.");
