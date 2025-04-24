@@ -5,7 +5,8 @@ const { register, login, createBoard, myBoards, deleteBoard,
     createTicket, getTickets,deleteTicket, board,updateBoard,
     getSingleTicket,updateTicket,assignUserToTicket,
 removeUserFromTicket,getUserProfile,updateUserProfile,
-    deleteUser} = require('../controllers/controllers');
+    deleteUser,getNotifications,createNotification,markNotificationRead, deleteNotification
+} = require('../controllers/controllers');
 
 
 //User
@@ -31,6 +32,13 @@ router.put("/tickets/:ticketId", authMiddleware, updateTicket);
 router.delete('/delete-ticket/:ticketId',authMiddleware, deleteTicket);
 router.put("/tickets/:ticketId/assign",authMiddleware, assignUserToTicket);
 router.put("/tickets/:ticketId/remove",authMiddleware, removeUserFromTicket);
+
+
+//notifications
+router.get('/notifications/:userId',authMiddleware, getNotifications);
+router.post('/notifications/create',authMiddleware, createNotification);
+router.patch('/:notificationId/mark-read',authMiddleware, markNotificationRead);
+router.delete('/:notificationId',authMiddleware, deleteNotification);
 
 
 module.exports = router;
