@@ -2,7 +2,61 @@ const User = require('../models/User');
 const jwt = require('jsonwebtoken');
 const Board = require('../models/Board');
 const Ticket = require('../models/Ticket');
+const Notifications = require('../models/Notifications');
 const mongoose = require('mongoose');
+let io;
+
+function setSocketInstance(ioInstance) {
+    io = ioInstance;
+}
+
+//helper for sending notifications
+const sendNotification = async (userId, type, message) => {
+    try {
+        const notification = new Notifications({
+            userId,
+            type,
+            message,
+            read: false,
+        });
+
+        await notification.save();
+
+        if (io) {
+            io.to(userId.toString()).emit('new-notification', notification);
+        }
+
+        return notification;
+    } catch (error) {
+        console.error('Error sending notification:', error);
+        throw error;
+    }
+};
+
+// helper for sending notification when assigned to ticket
+const notifyAssignedUsers = async (userIds, ticketTitle) => {
+    const results = await Promise.all(userIds.map(async (userId) => {
+        try {
+            const notification = new Notifications({
+                userId,
+                type: 'assigned',
+                message: `You have been assigned a new ticket: ${ticketTitle}`,
+                read: false,
+            });
+
+            await notification.save();
+
+            if (io) io.to(userId.toString()).emit('new-notification', notification);
+            console.log(`Notification created `, notification._id);
+            return { success: true, userId };
+        } catch (error) {
+            console.error(`Failed to notify user ${userId}:`, error);
+            return { success: false, userId, error: error.message };
+        }
+    }));
+
+    return results;
+};
 
 
 // Register
@@ -169,10 +223,30 @@ const createBoard = async (req, res) => {
 
         await board.save();
 
-        // ✅ Return the full board object (with _id, name, etc.)
-        res.status(201).json(board); // Changed from .send() to .json()
+        // Send notifications to all members (including owner if you want)
+        const allRecipients = [...members, owner]; // Include owner if needed
+        console.log('Preparing notifications for:', allRecipients.length, 'users');
+        await Promise.all(
+            allRecipients.map(async (user) => {
+                try {
+                    console.log(`Creating notification for ${user.email}`);
+                    const notif = await sendNotification(
+                        user._id,
+                        'added-to-board',
+                        `You were added to the board: ${board.name}`
+                    );
+                    console.log(`Notification created for ${user.email}:`, notif._id);
+                    return { success: true, userId: user._id, notifId: notif._id };
+                } catch (error) {
+                    console.error(`FAILED notification for ${user.email}:`, error.message);
+                    return { success: false, userId: user._id, error: error.message };
+                }
+            })
+        );
+
+        res.status(201).json(board);
     } catch (error) {
-        console.error(error);
+        console.error("Error creating board:", error);
         res.status(500).send("Error creating board.");
     }
 };
@@ -247,15 +321,34 @@ const updateBoard = async (req, res) => {
       );
   
       await board.save();
-  
-      res.json(board);
+        // 🔔 Send notifications to newly added members
+        const allRecipients = usersToAdd;
+        console.log('Preparing notifications for:', allRecipients.length, 'users');
+        await Promise.all(
+            allRecipients.map(async (user) => {
+                try {
+                    console.log(`Creating notification for ${user.email}`);
+                    const notif = await sendNotification(
+                        user._id,
+                        'added-to-board',
+                        `You were added to the board: ${board.name}`
+                    );
+                    console.log(`Notification created for ${user.email}:`, notif._id);
+                    return { success: true, userId: user._id, notifId: notif._id };
+                } catch (error) {
+                    console.error(`FAILED notification for ${user.email}:`, error.message);
+                    return { success: false, userId: user._id, error: error.message };
+                }
+            })
+        );
+
+        res.status(200).json(board);
     } catch (error) {
       console.error(error);
       res.status(500).json({ message: 'Server error' });
     }
   };
   
-
 
 
 
@@ -330,6 +423,9 @@ const createTicket = async (req, res) => {
         });
 
         await ticket.save();
+
+        // Notify all assigned users
+        const notificationResults = await notifyAssignedUsers(assignedUserIds, title);
 
         const populatedTicket = await Ticket.findById(ticket._id).populate("assignedTo", "name email");
         res.status(201).json(populatedTicket);
@@ -455,6 +551,9 @@ const updateTicket = async (req, res) => {
 
         await ticket.save();
 
+        // Notify all assigned users
+        const notificationResults = await notifyAssignedUsers(assignedUserIds, title);
+
         // Populate updated ticket
         const updatedTicket = await Ticket.findById(ticket._id).populate("assignedTo", "name email");
 
@@ -491,7 +590,6 @@ const deleteTicket = async (req, res) => {
 };
 
 
-// assign user to a ticket
 const assignUserToTicket = async (req, res) => {
     try {
         const { ticketId } = req.params;
@@ -512,7 +610,7 @@ const assignUserToTicket = async (req, res) => {
         }
 
         // Check if user is already assigned
-        if (ticket.assignedTo.includes(user._id)) {
+        if (ticket.assignedTo.some(id => id.equals(user._id))) {
             return res.status(400).send("User is already assigned to this ticket.");
         }
 
@@ -526,6 +624,18 @@ const assignUserToTicket = async (req, res) => {
         ticket.assignedTo.push(user._id);
         await ticket.save();
 
+        // Send notification
+        const notification = new Notifications({
+            userId: user._id,
+            type: 'assigned',
+            message: `You have been assigned to the ticket: ${ticket.title}`,
+            read: false,
+        });
+        await notification.save();
+
+        if (io) io.to(user._id.toString()).emit('new-notification', notification);
+        console.log("Notification sent");
+
         const updated = await Ticket.findById(ticketId).populate("assignedTo", "name email");
         res.status(200).json(updated);
     } catch (error) {
@@ -533,6 +643,7 @@ const assignUserToTicket = async (req, res) => {
         res.status(500).send("Internal server error.");
     }
 };
+
 
 
 //remove user from the ticket
@@ -575,9 +686,94 @@ const removeUserFromTicket = async (req, res) => {
 };
 
 
-module.exports = { register, login,createBoard,
+// Get all notifications for a user
+const getNotifications = async (req, res) => {
+    try {
+        const { userId } = req.params;
+        const notifications = await Notifications.find({ userId }).sort({ createdAt: -1 });
+        res.status(200).json(notifications);
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to fetch notifications' });
+    }
+};
+
+// Create a new notification. Note: Now it is not used but might be useful in case of
+//notifications which are triggered from frontend
+const createNotification = async (req, res) => {
+    try {
+        const { userId, type, message } = req.body;
+        const notification = new Notifications({
+            userId,
+            type,
+            message,
+            read: false,
+        });
+        await notification.save();
+
+        if (io) io.to(userId).emit('new-notification', notification);
+
+        res.status(201).json(notification);
+    } catch (error) {
+        console.error("Error creating notification:", error);
+        res.status(500).send("Error creating notification.");
+    }
+};
+
+
+
+// Mark as read notification
+const markNotificationRead = async (req, res) => {
+    try {
+        const { notificationId } = req.params;
+        const userId = req.user.id;
+
+        if (!mongoose.Types.ObjectId.isValid(notificationId)) {
+            return res.status(400).send("Invalid notification ID.");
+        }
+
+        // Fetch only notifications belonging to the logged-in user
+        const notification = await Notifications.findOne({
+            _id: notificationId,
+            userId: userId
+        });
+
+        if (!notification) {
+            return res.status(404).send("Notification not found or access denied.");
+        }
+
+        notification.read = true;
+        await notification.save();
+
+        res.status(200).json({ message: "Notification marked as read", notification });
+    } catch (error) {
+        console.error("Error marking notification as read:", error);
+        res.status(500).send("Error updating notification.");
+    }
+};
+
+
+// Delete notification
+const deleteNotification = async (req, res) => {
+    try {
+        const { notificationId } = req.params;
+        const notification = await Notifications.findByIdAndDelete(notificationId);
+
+        if (!notification) return res.status(404).send("Notification not found.");
+
+        if (io) io.to(notification.userId.toString()).emit('notification-deleted', notificationId);
+
+        res.status(200).send("Notification deleted.");
+    } catch (err) {
+        console.error("Error deleting notification:", err);
+        res.status(500).send("Error.");
+    }
+};
+
+
+
+module.exports = {setSocketInstance, register, login,createBoard,
     myBoards,deleteBoard,createTicket,getTickets,deleteTicket,
 board, updateBoard,getSingleTicket, updateTicket,assignUserToTicket,
-removeUserFromTicket,getUserProfile,updateUserProfile, updateUserProfile,
-deleteUser};
+removeUserFromTicket,getUserProfile, updateUserProfile, deleteUser,
+getNotifications,createNotification,markNotificationRead, deleteNotification};
 
