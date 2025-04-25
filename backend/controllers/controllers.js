@@ -501,6 +501,28 @@ const getSingleTicket = async (req, res) => {
     }
 };
 
+
+// Get all tickets that are assigned to user
+const getMyTickets = async (req, res) => {
+    try {
+        const userId = req.user._id;
+
+        const tickets = await Ticket.find({ assignedTo: userId })
+            .populate("boardId", "name") // Optional: includes board name
+            .select("-__v"); // Optional: excludes Mongoose internal field
+
+        if (!tickets.length) {
+            return res.status(404).send("No tickets assigned to this user.");
+        }
+
+        res.status(200).json(tickets);
+    } catch (err) {
+        console.error("Error fetching assigned tickets:", err);
+        res.status(500).send("Error fetching tickets.");
+    }
+};
+
+
 // update ticket
 const updateTicket = async (req, res) => {
     try {
@@ -896,7 +918,7 @@ const generateTicketsFromPrompt = async (req, res) => {
 
 module.exports = {setSocketInstance, register, login,createBoard,
     myBoards,deleteBoard,createTicket,getTickets,deleteTicket,
-board, updateBoard,getSingleTicket, updateTicket,assignUserToTicket,
+board, updateBoard,getSingleTicket,getMyTickets, updateTicket,assignUserToTicket,
 removeUserFromTicket,getUserProfile, updateUserProfile, deleteUser,
 getNotifications,createNotification,markNotificationRead, deleteNotification,
 generateTicketsFromPrompt};
