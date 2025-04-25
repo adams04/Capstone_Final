@@ -151,6 +151,26 @@ const getUserProfile = async (req, res) => {
     }
 };
 
+// Get name and email of user by giving ID
+
+const getUserBasicInfoById = async (req, res) => {
+    const { userID } = req.params;
+
+    try {
+        const user = await User.findById(userID).select('name email');
+        if (!user) return res.status(404).json({ error: "User not found" });
+
+        res.status(200).json({
+            name: user.name,
+            email: user.email
+        });
+    } catch (err) {
+        console.error("Error fetching basic info:", err);
+        res.status(500).json({ error: "Internal server error" });
+    }
+};
+
+
 
 // Update User Profile
 const updateUserProfile = async (req, res) => {
@@ -922,5 +942,5 @@ module.exports = {setSocketInstance, register, login,createBoard,
 board, updateBoard,getSingleTicket,getMyTickets, updateTicket,assignUserToTicket,
 removeUserFromTicket,getUserProfile, updateUserProfile, deleteUser,
 getNotifications,createNotification,markNotificationRead, deleteNotification,
-generateTicketsFromPrompt};
+generateTicketsFromPrompt, getUserBasicInfoById};
 
