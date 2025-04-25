@@ -6,7 +6,8 @@ const { register, login, createBoard, myBoards, deleteBoard,
     getSingleTicket,updateTicket,assignUserToTicket,
 removeUserFromTicket,getUserProfile,updateUserProfile,
     deleteUser,getNotifications,createNotification,markNotificationRead, deleteNotification,
-generateTicketsFromPrompt} = require('../controllers/controllers');
+generateTicketsFromPrompt,getMyTickets
+} = require('../controllers/controllers');
 
 
 //User
@@ -16,22 +17,22 @@ router.get('/user-profile', authMiddleware, getUserProfile);
 router.put('/update-profile', authMiddleware, updateUserProfile);
 router.delete('/delete-user', authMiddleware, deleteUser);
 
-// board
-router.post('/create-board',authMiddleware, createBoard)
-router.get('/users/:email/boards',authMiddleware, myBoards);
-router.get('/:boardId',authMiddleware, board);
-router.put('/:boardId',authMiddleware, updateBoard);
-router.delete('/delete-board/:boardId',authMiddleware, deleteBoard);
-
-
 //ticket
 router.post('/create-ticket',authMiddleware, createTicket);
+router.get("/my-tickets", authMiddleware, getMyTickets);
 router.get('/tickets/:boardId',authMiddleware, getTickets);
 router.get("/ticket/:ticketId", authMiddleware, getSingleTicket);
 router.put("/tickets/:ticketId", authMiddleware, updateTicket);
 router.delete('/delete-ticket/:ticketId',authMiddleware, deleteTicket);
 router.put("/tickets/:ticketId/assign",authMiddleware, assignUserToTicket);
 router.put("/tickets/:ticketId/remove",authMiddleware, removeUserFromTicket);
+
+// board
+router.post('/create-board',authMiddleware, createBoard)
+router.get('/users/:email/boards',authMiddleware, myBoards);
+router.get('/:boardId',authMiddleware, board);
+router.put('/:boardId',authMiddleware, updateBoard);
+router.delete('/delete-board/:boardId',authMiddleware, deleteBoard);
 
 
 //notifications
