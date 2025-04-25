@@ -502,6 +502,7 @@ const getSingleTicket = async (req, res) => {
 };
 
 
+
 // Get all tickets that are assigned to user
 const getMyTickets = async (req, res) => {
     try {

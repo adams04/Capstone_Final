@@ -6,7 +6,8 @@ const { register, login, createBoard, myBoards, deleteBoard,
     getSingleTicket,updateTicket,assignUserToTicket,
 removeUserFromTicket,getUserProfile,updateUserProfile,
     deleteUser,getNotifications,createNotification,markNotificationRead, deleteNotification,
-generateTicketsFromPrompt,getMyTickets} = require('../controllers/controllers');
+generateTicketsFromPrompt,getMyTickets
+} = require('../controllers/controllers');
 
 
 //User
