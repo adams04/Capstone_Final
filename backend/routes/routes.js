@@ -6,7 +6,7 @@ const { register, login, createBoard, myBoards, deleteBoard,
     getSingleTicket,updateTicket,assignUserToTicket,
 removeUserFromTicket,getUserProfile,updateUserProfile,
     deleteUser,getNotifications,createNotification,markNotificationRead, deleteNotification,
-generateTicketsFromPrompt,getMyTickets
+generateTicketsFromPrompt,getMyTickets, getUserBasicInfoById
 } = require('../controllers/controllers');
 
 
@@ -16,6 +16,8 @@ router.post('/login', login);
 router.get('/user-profile', authMiddleware, getUserProfile);
 router.put('/update-profile', authMiddleware, updateUserProfile);
 router.delete('/delete-user', authMiddleware, deleteUser);
+router.get('/user/:userID/basic-info', getUserBasicInfoById);
+
 
 //ticket
 router.post('/create-ticket',authMiddleware, createTicket);
