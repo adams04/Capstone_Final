@@ -17,7 +17,7 @@ const authMiddleware = async (req, res, next) => {
             return res.status(401).json({ error: 'User not found.' });
         }
 
-        req.user = user; // You can now access req.user in all protected routes
+        req.user = user; //  You can now access req.user in all protected routes
         next();
     } catch (error) {
         return res.status(401).json({ error: 'Invalid token.' });
