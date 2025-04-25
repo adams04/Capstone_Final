@@ -5,8 +5,8 @@ const { register, login, createBoard, myBoards, deleteBoard,
     createTicket, getTickets,deleteTicket, board,updateBoard,
     getSingleTicket,updateTicket,assignUserToTicket,
 removeUserFromTicket,getUserProfile,updateUserProfile,
-    deleteUser,getNotifications,createNotification,markNotificationRead, deleteNotification
-} = require('../controllers/controllers');
+    deleteUser,getNotifications,createNotification,markNotificationRead, deleteNotification,
+generateTicketsFromPrompt} = require('../controllers/controllers');
 
 
 //User
@@ -40,5 +40,8 @@ router.post('/notifications/create',authMiddleware, createNotification);
 router.patch('/:notificationId/mark-read',authMiddleware, markNotificationRead);
 router.delete('/:notificationId',authMiddleware, deleteNotification);
 
+
+//AI assistant
+router.post("/ai-helper/:boardId", authMiddleware, generateTicketsFromPrompt);
 
 module.exports = router;

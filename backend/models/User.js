@@ -7,6 +7,11 @@ const userSchema = new mongoose.Schema({
     surname: { type: String, required: false }, // Changed to not required
     email: { type: String, required: true, unique: true },
     passwordHash: { type: String, required: true },
+    profession: {
+        type: String,
+        enum: ['developer', 'designer', 'project-manager', 'qa-engineer', 'devops'],
+        required: true
+    },
     dateOfBirth: { type: Date },
     profileImage: { type: String },
     boards: [{ type: Schema.Types.ObjectId, ref: 'Board' }],
