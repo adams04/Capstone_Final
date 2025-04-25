@@ -1,0 +1,498 @@
+/* ======================== */
+/* === ROOT VARIABLES === */
+/* ======================== */
+:root {
+  --bg-dark: #121212;
+  --card-bg: #1e1e1e;
+  --text-light: #e0e0e0;
+  --text-muted: #aaaaaa;
+  --accent: #B50D8A;
+  --border-dark: #333;
+  --danger: #ff6b6b;
+}
+
+/* ======================== */
+/* === BASE STYLES === */
+/* ======================== */
+body {
+  background-color: var(--bg-dark);
+  color: var(--text-light);
+}
+
+/* Main content area with sidebar offset */
+.main-content {
+  margin-left: 250px;
+  padding: 140px 2rem 2rem;
+  min-height: 100vh;
+}
+
+/* ======================== */
+/* === PROJECT GRID === */
+/* ======================== */
+.projects-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1.5rem;
+  margin-top: 1rem;
+}
+
+/* Project card styling */
+.project-card {
+  background: var(--card-bg);
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s, box-shadow 0.2s;
+  border: 1px solid var(--border-dark);
+  position: relative;
+}
+
+.project-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+}
+
+.project-name {
+  color: #B9B9B9;
+  margin-bottom: 0.5rem;
+}
+
+.project-description {
+  color: var(--text-muted);
+  margin-bottom: 1rem;
+  font-size: 0.9rem;
+}
+
+/* Project card footer with members/tasks */
+.project-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border-dark);
+  color: var(--accent);
+}
+
+/* ======================== */
+/* === ACTION BUTTONS === */
+/* ======================== */
+/* Shared button styles */
+.sort-trigger, 
+.add-project-btn {
+  border: 1px solid var(--border-dark);
+  border-radius: 6px;
+  padding: 0.75rem 1.5rem;
+  font-size: 0.9rem;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  height: 40px;
+  box-sizing: border-box;
+}
+
+/* Specific button styles */
+.add-project-btn {
+  background: linear-gradient(90deg, #4E01FD 0%, #E81352 100%);
+  color: white;
+  border: none;
+}
+
+.sort-trigger {
+  background: var(--card-bg);
+  color: var(--text-light);
+  border-color: #595959;
+}
+
+/* Button hover states */
+.add-project-btn:hover {
+  opacity: 0.9;
+}
+
+.sort-trigger:hover {
+  background: #333;
+}
+
+/* Sort dropdown menu */
+.sort-container {
+  position: relative;
+  display: inline-block;
+  margin-left: 1rem;
+}
+
+.sort-dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  width: 200px;
+  background: var(--card-bg);
+  border: 1px solid var(--border-dark);
+  border-radius: 6px;
+  padding: 0.5rem;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  display: none;
+  z-index: 100;
+}
+
+.sort-container:hover .sort-dropdown {
+  display: block;
+}
+
+.sort-option {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: transparent;
+  border: none;
+  color: var(--text-light);
+  padding: 0.75rem 1rem;
+  cursor: pointer;
+  text-align: left;
+  border-radius: 5px;
+}
+
+/* ======================== */
+/* === PROJECT ACTIONS === */
+/* ======================== */
+.project-actions {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  display: flex;
+  gap: 0.5rem;
+}
+
+.project-actions button {
+  background: rgba(255, 255, 255, 0.1);
+  border: none;
+  border-radius: 4px;
+  padding: 0.3rem;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: color 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.project-actions button:hover {
+  color: white;
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.add-member-btn {
+  background: transparent;
+  border: none;
+  color: var(--accent);
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  cursor: pointer;
+  font-size: 0.85rem;
+}
+
+/* ======================== */
+/* === ACTION BAR === */
+/* ======================== */
+
+.projects-action-bar {
+  background: transparent; /* Remove gray background */
+  border-bottom: 1px; /* Remove border */
+  padding: 2.5rem 2rem; /* Remove padding */
+  position: fixed;
+  top: 60px;
+  left: 250px;
+  right: 0;
+  z-index: 99;
+  display: flex;
+  justify-content: flex-end;
+}
+
+/* Adjust the main content padding to account for removed bar */
+.main-content {
+  padding-top: 150px; /* Reduced from 140px to account for removed bar */
+}
+
+.action-buttons {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+/* ======================== */
+/* === MODAL STYLES === */
+/* ======================== */
+/* Shared modal styles */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0,0,0,0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 2000;
+}
+
+/* Base modal container */
+.create-modal,
+.edit-modal,
+.delete-modal {
+  background: var(--card-bg);
+  border-radius: 16px;
+  padding: 2rem;
+  width: 90%;
+  max-width: 400px;
+  text-align: center;
+  color: var(--text-light);
+}
+
+/* Modal headings */
+.create-modal h2,
+.edit-modal h2,
+.delete-modal h3 {
+  color: #B9B9B9;
+  margin-bottom: 0.75rem;
+}
+
+/* Modal text/content */
+.create-modal p,
+.edit-modal p,
+.delete-modal p {
+  color: var(--text-muted);
+  margin-bottom: 1.5rem;
+}
+
+/* Input fields */
+.create-modal-input,
+.edit-modal-input {
+  width: 100%;
+  padding: 1rem;
+  border-radius: 5px;
+  font-size: 1rem;
+  border: none;
+  background-color: #2a2a2a;
+  color: white;
+}
+
+.input-spacer {
+  margin-bottom: 2rem;
+}
+
+/* Modal action buttons container */
+.create-modal-actions,
+.edit-modal-actions,
+.delete-modal-actions,
+.add-member-modal-actions {
+  display: flex;
+  gap: 1rem;
+}
+
+/* Shared button styles for modals */
+.create-cancel-btn,
+.edit-cancel-btn,
+.add-member-cancel-btn,
+.delete-cancel-btn {
+  background: #333 !important;
+  color: white !important;
+  border: none;
+  border-radius: 5px;
+  padding: 0.8rem 1.5rem;
+  font-weight: 600;
+  cursor: pointer;
+  flex: 1;
+}
+
+.create-submit-btn,
+.edit-save-btn,
+.add-member-submit-btn,
+.delete-confirm-btn {
+  background: linear-gradient(90deg, #4E01FD 0%, #E81352 100%);
+  color: white;
+  border: none;
+  border-radius: 5px;
+  padding: 0.8rem 1.5rem;
+  font-weight: 600;
+  cursor: pointer;
+  flex: 1;
+}
+
+/* Disabled button state */
+.create-submit-btn:disabled,
+.edit-save-btn:disabled,
+.add-member-submit-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* ======================== */
+/* === MEMBERS MODAL === */
+/* ======================== */
+
+.members-modal {
+  background: var(--card-bg);
+  border-radius: 16px;
+  padding: 2rem;
+  width: 90%;
+  max-width: 500px;
+  color: var(--text-light);
+  z-index: 7000;
+}
+
+.members-modal h2 {
+  color: #B9B9B9;
+  margin-bottom: 1rem;
+}
+
+.members-search {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  border: 1px solid var(--border-dark);
+  background-color: #2a2a2a;
+  color: white;
+  margin-bottom: 0.3rem;
+}
+
+.add-member-btn {
+  background: none;
+  border: none;
+  color: var(--accent);
+  cursor: pointer;
+  padding: 0.3rem 0;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+  display: block;
+}
+
+.members-list {
+  max-height: 50vh;
+  overflow-y: auto;
+  margin: 1rem 0;
+  border-radius: 8px;
+}
+
+.member-item {
+  display: flex;
+  align-items: center;
+  padding: 1rem;
+  gap: 1rem;
+  border-bottom: 1px solid var(--border-dark);
+}
+
+.member-item:last-child {
+  border-bottom: none;
+}
+
+.member-checkbox {
+  min-width: 18px;
+  min-height: 18px;
+  margin-right: 1rem;
+  accent-color: var(--accent);
+}
+
+.member-details {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.member-name {
+  font-weight: 500;
+  color: var(--text-light);
+  margin-bottom: 0.25rem;
+}
+
+.member-email {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  opacity: 0.8;
+}
+
+
+
+.members-modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--border-dark);
+}
+
+.close-btn {
+  background: #333 !important;
+  color: white !important;
+  border: none;
+  border-radius: 5px;
+  padding: 0.8rem 1.5rem;
+  font-weight: 600;
+  cursor: pointer;
+  flex: 1;
+}
+
+.delete-btn {
+  background: linear-gradient(90deg, #4E01FD 0%, #E81352 100%);
+  color: white;
+  border: none;
+  border-radius: 5px;
+  padding: 0.8rem 1.5rem;
+  font-weight: 600;
+  cursor: pointer;
+  flex: 1;
+}
+
+
+/* ======================== */
+/* === UTILITY CLASSES === */
+/* ======================== */
+.error-message {
+  background: rgba(255, 0, 0, 0.1);
+  color: #ff6b6b;
+  padding: 1rem;
+  border-radius: 6px;
+  margin-bottom: 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.error-message button {
+  background: transparent;
+  border: none;
+  color: var(--text-light);
+  cursor: pointer;
+}
+
+.loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  color: var(--text-light);
+}
+
+/* ======================== */
+/* === RESPONSIVE === */
+/* ======================== */
+@media (max-width: 768px) {
+  .main-content {
+    margin-left: 0;
+    padding-top: 180px;
+  }
+  
+  .projects-action-bar {
+    left: 0;
+  }
+  
+  .projects-grid {
+    grid-template-columns: 1fr;
+  }
+}

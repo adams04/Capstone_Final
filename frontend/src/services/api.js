@@ -33,6 +33,7 @@ API.interceptors.response.use(
 
 // API Groups
 export const authAPI = {
+
   login: async (credentials) => {
     const { data } = await API.post('/auth/login', credentials);
     localStorage.setItem('token', data.token);
@@ -45,9 +46,35 @@ export const authAPI = {
   },
   logout: () => {
     localStorage.removeItem('token');
-  }
-};
+  },
 
+  getUserProfile: async () => {
+    const response = await API.get('/auth/user-profile');
+    return response.data; 
+  },
+
+  getMembers: async (boardId) => {
+    try {
+      const { data } = await API.get(`/boards/${boardId}/members`);
+      return data;
+    } catch (error) {
+      console.error('Error fetching board members:', error);
+      throw error;
+    }
+  },
+
+  getUserBasicInfoById: async (userID) => {
+    try {
+      const response = await API.get(`/auth/user/${userID}/basic-info`);
+      return response.data;
+    } catch (error) {
+      console.error("Error fetching basic user info:", error);
+      throw error;
+    }
+  },
+
+};
+  
 export const boardAPI = {
   create: async (boardData) => {
     const { data } = await API.post('/auth/create-board', boardData);
@@ -69,6 +96,18 @@ export const boardAPI = {
   delete: async (boardId) => {
     const { data } = await API.delete(`/auth/delete-board/${boardId}`);
     return data;
+  },
+
+  removeMembers: async (boardId, emails) => {
+    try {
+      const { data } = await API.put(`/auth/${boardId}`, {
+        removeMembers: emails 
+      });
+      return data;
+    } catch (error) {
+      console.error('Error removing members:', error);
+      throw error;
+    }
   }
 };
 

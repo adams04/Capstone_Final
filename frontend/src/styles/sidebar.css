@@ -1,0 +1,82 @@
+/* sidebar.css */
+
+.sidebar {
+    width: 250px;
+    height: 100vh; /* Full viewport height */
+    background: #252927;
+    position: fixed;
+    left: 0;
+    top: 0; /* Ensure it starts at very top */
+    padding: 1rem; /* Reduced top padding */
+    color: #595959;
+    font-weight: 100;
+    overflow-y: auto; /* Add scroll if content exceeds height */
+    z-index: 90; /* Ensure it stays below top nav */
+  }
+  
+  .sidebar-header {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #B50D8A;
+    margin-bottom: 2rem;
+    padding-left: 1rem;
+  }
+  
+  .sidebar-menu {
+    list-style: none;
+  }
+  
+  .sidebar-item {
+    padding: 0.8rem 1rem;
+    margin-bottom: 0.5rem;
+    border-radius: 8px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+  
+  .sidebar-item:hover {
+    background: rgba(181, 13, 138, 0.2);
+  }
+  
+  .sidebar-item.active {
+    background: linear-gradient(90deg, #4E01FD 0%, #E81352 100%);
+    color: white;
+    border-top-right-radius: 25px;
+    border-bottom-right-radius: 25px;
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+    margin-left: 0;
+  }
+  
+  .sidebar-icon {
+    font-size: 1.2rem;
+  }
+
+  .sidebar-user {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    margin-bottom: 2rem;
+    border-bottom: 1px solid #333;
+  }
+  
+  .user-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #4E01FD 0%, #E81352 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: bold;
+    font-size: 1.2rem;
+  }
+  
+  .user-name {
+    font-weight: 500;
+    font-size: 1.1rem;
+  }

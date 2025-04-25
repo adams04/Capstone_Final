@@ -316,64 +316,111 @@ const board =  async (req, res) => {
 // Update board
 const updateBoard = async (req, res) => {
     const { name, description, addMembers = [], removeMembers = [] } = req.body;
-  
+    const { boardId } = req.params;
+
     try {
-      const board = await Board.findOne({
-        _id: req.params.boardId,
-        $or: [{ owner: req.user._id }, { members: req.user._id }]
-      });
-  
-      if (!board) {
-        return res.status(404).json({ message: 'Board not found or not authorized' });
-      }
-  
-      if (name !== undefined) board.name = name;
-      if (description !== undefined) board.description = description;
-  
-      // Convert emails to user IDs
-      const usersToAdd = await User.find({ email: { $in: addMembers } });
-      const userIdsToAdd = usersToAdd.map(user => user._id);
-  
-      // Add new members
-      board.members = [...new Set([...board.members, ...userIdsToAdd])];
-  
-      // Remove members
-      const usersToRemove = await User.find({ email: { $in: removeMembers } });
-      const userIdsToRemove = usersToRemove.map(user => user._id);
-      board.members = board.members.filter(
-        memberId => !userIdsToRemove.includes(memberId.toString())
-      );
-  
-      await board.save();
-        // 🔔 Send notifications to newly added members
-        const allRecipients = usersToAdd;
-        console.log('Preparing notifications for:', allRecipients.length, 'users');
-        await Promise.all(
-            allRecipients.map(async (user) => {
-                try {
-                    console.log(`Creating notification for ${user.email}`);
-                    const notif = await sendNotification(
-                        user._id,
-                        'added-to-board',
-                        `You were added to the board: ${board.name}`
-                    );
-                    console.log(`Notification created for ${user.email}:`, notif._id);
-                    return { success: true, userId: user._id, notifId: notif._id };
-                } catch (error) {
-                    console.error(`FAILED notification for ${user.email}:`, error.message);
-                    return { success: false, userId: user._id, error: error.message };
-                }
-            })
-        );
+        // 1. Find the board with owner/member authorization
+        const board = await Board.findOne({
+            _id: boardId,
+            $or: [{ owner: req.user._id }, { members: req.user._id }]
+        }).populate('members', '_id email');
 
-        res.status(200).json(board);
+        if (!board) {
+            return res.status(404).json({ 
+                success: false,
+                message: 'Board not found or not authorized' 
+            });
+        }
+
+        // 2. Debug logs for tracking
+        console.log('\nCurrent board members:', board.members.map(m => ({
+            _id: m._id,
+            email: m.email
+        })));
+        console.log('Request to remove members:', removeMembers);
+
+        // 3. Update basic fields if provided
+        if (name !== undefined) board.name = name;
+        if (description !== undefined) board.description = description;
+
+        // 4. Handle member additions
+        if (addMembers.length > 0) {
+            const usersToAdd = await User.find({ email: { $in: addMembers } });
+            const userIdsToAdd = usersToAdd.map(user => user._id);
+            
+            // Filter out duplicates
+            const existingMemberIds = board.members.map(m => m._id.toString());
+            const newMembers = userIdsToAdd.filter(
+                id => !existingMemberIds.includes(id.toString())
+            );
+            
+            board.members = [...board.members, ...newMembers];
+            console.log(`Added ${newMembers.length} new members`);
+        }
+
+        // 5. Handle member removals (fixed implementation)
+        if (removeMembers.length > 0) {
+            const usersToRemove = await User.find({ email: { $in: removeMembers } });
+            
+            // Validate all requested members exist
+            const foundEmails = usersToRemove.map(u => u.email);
+            const missingEmails = removeMembers.filter(e => !foundEmails.includes(e));
+            
+            if (missingEmails.length > 0) {
+                console.warn('Some members not found:', missingEmails);
+            }
+
+            const userIdsToRemove = usersToRemove.map(u => u._id.toString());
+            
+            // Proper ID comparison
+            const initialCount = board.members.length;
+            board.members = board.members.filter(member => 
+                !userIdsToRemove.includes(member._id.toString())
+            );
+            
+            const removedCount = initialCount - board.members.length;
+            console.log(`Removed ${removedCount} members`);
+        }
+
+        // 6. Save changes
+        const updatedBoard = await board.save();
+        
+        // 7. Send notifications for newly added members
+        if (addMembers.length > 0) {
+            const newUsers = await User.find({ email: { $in: addMembers } });
+            await Promise.all(
+                newUsers.map(async (user) => {
+                    try {
+                        await sendNotification(
+                            user._id,
+                            'added-to-board',
+                            `You were added to board: ${board.name}`
+                        );
+                    } catch (err) {
+                        console.error(`Notification failed for ${user.email}:`, err);
+                    }
+                })
+            );
+        }
+
+        // 8. Return success response
+        res.status(200).json({
+            success: true,
+            message: 'Board updated successfully',
+            board: updatedBoard,
+            addedCount: addMembers.length,
+            removedCount: removeMembers.length
+        });
+
     } catch (error) {
-      console.error(error);
-      res.status(500).json({ message: 'Server error' });
+        console.error('\nUpdate board error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Server error during board update',
+            error: error.message
+        });
     }
-  };
-  
-
+};
 
 
 // delete board
