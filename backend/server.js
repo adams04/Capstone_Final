@@ -11,6 +11,7 @@ const server = https.createServer(app);
 const io = new Server(server);
 const { setSocketInstance } = require('./controllers/controllers');
 const {verify} = require("jsonwebtoken");
+require('dotenv').config();
 setSocketInstance(io);
 
 
@@ -26,7 +27,6 @@ app.use(express.json());
 
 // Routes
 app.use('/api/auth', authRoutes);
-
 
 // Web Socket
 io.on('connection', (socket) => {
