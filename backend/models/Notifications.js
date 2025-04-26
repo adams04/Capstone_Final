@@ -7,7 +7,7 @@ const notificationSchema = new mongoose.Schema({
     read: { type: Boolean, default: false },
     type: {
         type: String,
-        enum: ["comment", "mention", "assigned", "added-to-board"],
+        enum: ["comment", "assigned", "added-to-board"],
         required: true,
     }
     ,
