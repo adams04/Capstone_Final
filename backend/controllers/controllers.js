@@ -712,24 +712,27 @@ const deleteTicket = async (req, res) => {
     }
 };
 
-//Get ticket assignee name given the ticketId
+// Get ticket assignee name and email given the ticketId
 const getTicketAssignees = async (req, res) => {
     try {
         const ticketId = req.params.ticketId;
 
-        // 1. Find the ticket by ID
-        const ticket = await Ticket.findById(ticketId).populate("assignedTo", "name");
+        // 1. Find the ticket by ID and populate both name and email
+        const ticket = await Ticket.findById(ticketId).populate("assignedTo", "name email");
         if (!ticket) {
             return res.status(404).json({ message: 'Ticket not found' });
         }
 
-        // 2. Extract the names of the assignees
-        const assigneesNames = ticket.assignedTo.map(assignee => assignee.name);
+        // 2. Extract the name and email of each assignee
+        const assignees = ticket.assignedTo.map(assignee => ({
+            name: assignee.name,
+            email: assignee.email
+        }));
 
-        // 3. Return the list of assignee names
+        // 3. Return the list of assignees
         res.status(200).json({
             ticketId,
-            assignees: assigneesNames
+            assignees
         });
 
     } catch (error) {
@@ -737,7 +740,6 @@ const getTicketAssignees = async (req, res) => {
         res.status(500).json({ message: 'Server error', error: error.message });
     }
 };
-
 
 
 
