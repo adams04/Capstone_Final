@@ -3,6 +3,7 @@ const jwt = require('jsonwebtoken');
 const Board = require('../models/Board');
 const Ticket = require('../models/Ticket');
 const Notifications = require('../models/Notifications');
+const Comment = require('../models/Comment');
 const mongoose = require('mongoose');
 let io;
 
@@ -711,6 +712,34 @@ const deleteTicket = async (req, res) => {
     }
 };
 
+//Get ticket assignee name given the ticketId
+const getTicketAssignees = async (req, res) => {
+    try {
+        const ticketId = req.params.ticketId;
+
+        // 1. Find the ticket by ID
+        const ticket = await Ticket.findById(ticketId).populate("assignedTo", "name");
+        if (!ticket) {
+            return res.status(404).json({ message: 'Ticket not found' });
+        }
+
+        // 2. Extract the names of the assignees
+        const assigneesNames = ticket.assignedTo.map(assignee => assignee.name);
+
+        // 3. Return the list of assignee names
+        res.status(200).json({
+            ticketId,
+            assignees: assigneesNames
+        });
+
+    } catch (error) {
+        console.error("Error fetching assignees:", error);
+        res.status(500).json({ message: 'Server error', error: error.message });
+    }
+};
+
+
+
 
 const assignUserToTicket = async (req, res) => {
     try {
@@ -983,11 +1012,118 @@ const generateTicketsFromPrompt = async (req, res) => {
 };
 
 
+// Add comment
+const addComment = async (req, res) => {
+    try {
+        const ticketId = req.params.ticketId;
+        const { userId, text } = req.body;
+        const file = req.file;
+
+        // 1. Find the ticket
+        const ticket = await Ticket.findById(ticketId);
+        if (!ticket) return res.status(404).json({ message: 'Ticket not found' });
+
+        // 2. Get the board and check membership
+        const board = await Board.findById(ticket.boardId);
+        if (!board) return res.status(404).json({ message: 'Board not found' });
+
+        // 3. Check if the user is either a member or the owner of the board
+        const isMember = board.members.includes(userId);
+        const isOwner = board.owner.equals(userId);
+
+        if (!isMember && !isOwner) {
+            return res.status(403).json({ message: 'You must be a member or the owner of the board to comment' });
+        }
+
+        // 4. Create the comment
+        const newComment = new Comment({
+            ticketId,
+            userId,
+            text,
+            attachment: file ? file.filename : null
+        });
+
+        await newComment.save();
+
+        // 5. Get the list of users to notify (assigned users and board owner)
+        const assignedUsers = ticket.assignedTo;
+        const boardOwner = board.owner;
+
+        // Create a list of users to notify (excluding the user who posted the comment)
+        const usersToNotify = new Set([...assignedUsers, boardOwner]);
+
+        usersToNotify.forEach(async (assignedUserId) => {
+            if (!assignedUserId.equals(userId)) { // Avoid sending a notification to the commenter
+                const notification = new Notifications({
+                    userId: assignedUserId,
+                    type: 'comment',
+                    message: `A new comment has been added to the ticket: ${ticket.title}`,
+                    referenceId: ticket._id,
+                    read: false,
+                });
+
+                await notification.save();
+
+                // Emit the notification to the user via socket.io
+                if (io) io.to(assignedUserId.toString()).emit('new-notification', notification);
+                console.log("Notification sent to user:", assignedUserId);
+            }
+        });
+
+        res.status(201).json(newComment);
+
+    } catch (error) {
+        res.status(500).json({ message: 'Server error', error: error.message });
+    }
+};
+
+
+
+
+// get comments for a ticket
+const getCommentsForTicket = async (req, res) => {
+    try {
+        const { ticketId } = req.params;
+
+        const comments = await Comment.find({ ticketId })
+            .populate('userId', 'username email') // populate user details if you want
+            .sort({ createdAt: -1 }); // newest first
+
+        res.status(200).json(comments);
+    } catch (error) {
+        console.error('Error fetching comments:', error);
+        res.status(500).json({ message: 'Server Error' });
+    }
+};
+
+// Delete the comment (only owner can)
+const deleteComment = async (req, res) => {
+    try {
+        const { ticketId, commentId } = req.params;
+
+        // Find the comment
+        const comment = await Comment.findOne({ _id: commentId, ticketId });
+
+        if (!comment) {
+            return res.status(404).json({ message: 'Comment not found' });
+        }
+
+        await Comment.deleteOne({ _id: commentId });
+
+        res.status(200).json({ message: 'Comment deleted successfully' });
+    } catch (error) {
+        console.error('Error deleting comment:', error);
+        res.status(500).json({ message: 'Server Error' });
+    }
+};
+
+
 
 module.exports = {setSocketInstance, register, login,createBoard,
     myBoards,deleteBoard,createTicket,getTickets,deleteTicket,
 board, updateBoard,getSingleTicket,getMyTickets, updateTicket,assignUserToTicket,
 removeUserFromTicket,getUserProfile, updateUserProfile, deleteUser,
 getNotifications,createNotification,markNotificationRead, deleteNotification,
-generateTicketsFromPrompt, getUserBasicInfoById};
+generateTicketsFromPrompt, getUserBasicInfoById, addComment, getCommentsForTicket,
+getCommentsForTicket,deleteComment,getTicketAssignees};
 

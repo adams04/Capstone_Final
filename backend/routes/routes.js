@@ -1,13 +1,14 @@
 const express = require('express');
 const router = express.Router();
 const authMiddleware = require('../middleware/authMiddleware');
+const upload = require('../Uploads/uploads');
 const { register, login, createBoard, myBoards, deleteBoard,
     createTicket, getTickets,deleteTicket, board,updateBoard,
     getSingleTicket,updateTicket,assignUserToTicket,
 removeUserFromTicket,getUserProfile,updateUserProfile,
     deleteUser,getNotifications,createNotification,markNotificationRead, deleteNotification,
-generateTicketsFromPrompt,getMyTickets, getUserBasicInfoById
-} = require('../controllers/controllers');
+generateTicketsFromPrompt,getMyTickets, getUserBasicInfoById,addComment,
+    getCommentsForTicket,deleteComment,getTicketAssignees} = require('../controllers/controllers');
 
 
 //User
@@ -28,6 +29,8 @@ router.put("/tickets/:ticketId", authMiddleware, updateTicket);
 router.delete('/delete-ticket/:ticketId',authMiddleware, deleteTicket);
 router.put("/tickets/:ticketId/assign",authMiddleware, assignUserToTicket);
 router.put("/tickets/:ticketId/remove",authMiddleware, removeUserFromTicket);
+router.get('/tickets/:ticketId/assignees', authMiddleware, getTicketAssignees);
+
 
 // board
 router.post('/create-board',authMiddleware, createBoard)
@@ -46,5 +49,11 @@ router.delete('/:notificationId',authMiddleware, deleteNotification);
 
 //AI assistant
 router.post("/ai-helper/:boardId", authMiddleware, generateTicketsFromPrompt);
+
+
+// Comments
+router.post('/tickets/:ticketId/comments', authMiddleware, upload.single('attachment'), addComment);
+router.get('/tickets/:ticketId/comments', authMiddleware, getCommentsForTicket);
+router.delete('/tickets/:ticketId/comments/:commentId',authMiddleware, deleteComment);
 
 module.exports = router;
