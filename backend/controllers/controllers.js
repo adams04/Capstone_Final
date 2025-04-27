@@ -5,6 +5,7 @@ const Ticket = require('../models/Ticket');
 const Notifications = require('../models/Notifications');
 const Comment = require('../models/Comment');
 const mongoose = require('mongoose');
+const { Types } = require('mongoose');
 let io;
 
 function setSocketInstance(ioInstance) {
@@ -1205,6 +1206,7 @@ const addComment = async (req, res) => {
 
 
 
+
 // get comments for a ticket
 const getCommentsForTicket = async (req, res) => {
     try {
@@ -1300,6 +1302,42 @@ const generateDailyStandup = async (req, res) => {
     }
 };
 
+const uploadPicture = async (req, res) => {
+    try {
+        if (!req.file) {
+            return res.status(400).json({ message: 'No file uploaded.' });
+        }
+
+        if (!req.user || !req.user._id) {
+            return res.status(401).json({ message: 'Authentication required' });
+        }
+
+        // Correct path - use the actual path from req.file
+        const filePath = `/profilePictures/${req.file.filename}`;
+
+        // Update user
+        const user = await User.findByIdAndUpdate(
+            req.user._id,
+            { profileImage: filePath },
+            { new: true }
+        );
+
+        res.status(200).json({
+            message: 'Profile picture uploaded successfully!',
+            user,
+            imageUrl: filePath // Return the relative URL
+        });
+    } catch (err) {
+        console.error('Unexpected error:', err);
+        res.status(500).json({
+            message: 'An unexpected error occurred.',
+            error: err.message // Include error message
+        });
+    }
+};
+
+
+
 
 module.exports = {setSocketInstance, register, login,createBoard,
     myBoards,deleteBoard,createTicket,getTickets,deleteTicket,
@@ -1308,5 +1346,5 @@ removeUserFromTicket,getUserProfile, updateUserProfile, deleteUser,
 getNotifications,createNotification,markNotificationRead, deleteNotification,
 generateTicketsFromPrompt, getUserBasicInfoById, addComment,
 getCommentsForTicket,deleteComment,getTicketAssignees,generateDailyStandup,
-getMyTicketsForBoard};
+getMyTicketsForBoard, uploadPicture};
 
