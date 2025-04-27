@@ -9,7 +9,7 @@ removeUserFromTicket,getUserProfile,updateUserProfile,
     deleteUser,getNotifications,createNotification,markNotificationRead, deleteNotification,
 generateTicketsFromPrompt,getMyTickets, getUserBasicInfoById,addComment,
     getCommentsForTicket,deleteComment,getTicketAssignees,
-generateDailyStandup,getMyTicketsForBoard} = require('../controllers/controllers');
+generateDailyStandup,getMyTicketsForBoard, uploadPicture} = require('../controllers/controllers');
 
 
 //User
@@ -54,10 +54,12 @@ router.post("/ai-helper/:boardId", authMiddleware, generateTicketsFromPrompt);
 router.get("/ai-standup/:boardId", authMiddleware, generateDailyStandup);
 
 
-
 // Comments
 router.post('/tickets/:ticketId/comments', authMiddleware, upload.single('attachment'), addComment);
 router.get('/tickets/:ticketId/comments', authMiddleware, getCommentsForTicket);
 router.delete('/tickets/:ticketId/comments/:commentId',authMiddleware, deleteComment);
+
+// Upload Picture
+router.post('/upload-profile-picture',authMiddleware, upload.single('file'),uploadPicture);
 
 module.exports = router;
