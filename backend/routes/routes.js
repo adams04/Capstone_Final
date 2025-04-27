@@ -8,7 +8,8 @@ const { register, login, createBoard, myBoards, deleteBoard,
 removeUserFromTicket,getUserProfile,updateUserProfile,
     deleteUser,getNotifications,createNotification,markNotificationRead, deleteNotification,
 generateTicketsFromPrompt,getMyTickets, getUserBasicInfoById,addComment,
-    getCommentsForTicket,deleteComment,getTicketAssignees} = require('../controllers/controllers');
+    getCommentsForTicket,deleteComment,getTicketAssignees,
+generateDailyStandup,getMyTicketsForBoard} = require('../controllers/controllers');
 
 
 //User
@@ -23,6 +24,7 @@ router.get('/user/:userID/basic-info', getUserBasicInfoById);
 //ticket
 router.post('/create-ticket',authMiddleware, createTicket);
 router.get("/my-tickets", authMiddleware, getMyTickets);
+router.get("/my-tickets/:boardId", authMiddleware, getMyTicketsForBoard);
 router.get('/tickets/:boardId',authMiddleware, getTickets);
 router.get("/ticket/:ticketId", authMiddleware, getSingleTicket);
 router.put("/tickets/:ticketId", authMiddleware, updateTicket);
@@ -49,6 +51,8 @@ router.delete('/:notificationId',authMiddleware, deleteNotification);
 
 //AI assistant
 router.post("/ai-helper/:boardId", authMiddleware, generateTicketsFromPrompt);
+router.get("/ai-standup/:boardId", authMiddleware, generateDailyStandup);
+
 
 
 // Comments

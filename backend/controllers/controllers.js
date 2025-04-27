@@ -637,6 +637,30 @@ const getMyTickets = async (req, res) => {
     }
 };
 
+// Gets tickets assigned to user from specified board
+const getMyTicketsForBoard = async (req, res) => {
+    const userId = req.user._id;  // Assuming the user is authenticated and we have access to their ID
+    const { boardId } = req.params;  // Get the boardId from the route parameter
+
+    try {
+        // Fetch tickets assigned to the user and specific to the given board
+        const tickets = await Ticket.find({
+            assignedTo: userId,  // Only fetch tickets assigned to the logged-in user
+            boardId: boardId  // Only fetch tickets for the specific board
+        }).populate("boardId", "name")  // Optional: include board name
+            .select("-__v");  // Optional: exclude Mongoose internal field
+
+        if (!tickets.length) {
+            return res.status(404).json({ message: "No tickets assigned to you for this board." });
+        }
+
+        res.status(200).json(tickets);
+    } catch (err) {
+        console.error("Error fetching tickets for user in board:", err);
+        res.status(500).json({ message: "Error fetching tickets for the user in the board." });
+    }
+};
+
 
 // update ticket
 const updateTicket = async (req, res) => {
@@ -1218,6 +1242,63 @@ const deleteComment = async (req, res) => {
     }
 };
 
+//AI for daily stendup generation
+const generateDailyStandup = async (req, res) => {
+    const userId = req.user._id;
+
+    try {
+        // Fetch the user's tickets using the existing getMyTickets function
+        const tickets = await Ticket.find({ assignedTo: userId })
+            .populate("boardId", "name")
+            .select("-__v");
+
+        if (!tickets.length) {
+            return res.status(404).json({ message: "No tickets assigned to this user." });
+        }
+
+        // Prepare task information for the AI with formatted deadline
+        const taskInfo = tickets.map((ticket) => {
+            const deadline = ticket.deadline ? new Date(ticket.deadline) : null;
+            const formattedDeadline = deadline ? deadline.toLocaleDateString("en-US") : "No due date";
+            console.log(formattedDeadline);
+            return {
+                title: ticket.title,
+                status: ticket.status,
+                deadline: formattedDeadline,
+            };
+        });
+
+        // AI prompt for generating standup
+        const aiResponse = await openai.chat.completions.create({
+            model: "gpt-4",
+            messages: [
+                {
+                    role: "system",
+                    content: `You're an AI assistant helping with daily standups. Given a list of tasks, write a short and clear standup summary. The tone should be professional, but friendly—neither too formal nor too casual. Each task should be summarized with:
+                    - A brief mention of the task.
+                    - Its current status (e.g., "in progress," "to be done").
+                    - The due date, if available (e.g., "no due date," "due tomorrow," or an exact date).
+                    Keep the summary concise, easy to read, and engaging without being overly formal or too casual.`
+                },
+                {
+                    role: "user",
+                    content: `Here are the tasks: ${JSON.stringify(taskInfo)}`
+                }
+            ]
+        });
+
+        const aiText = aiResponse.choices[0]?.message?.content?.trim();
+
+        res.status(200).json({
+            message: "Daily standup generated successfully.",
+            standup: aiText
+        });
+
+    } catch (err) {
+        console.error("AI Standup Error:", err.response?.data || err.message, err.stack);
+        res.status(500).json({ message: "Internal server error during AI standup generation." });
+    }
+};
 
 
 module.exports = {setSocketInstance, register, login,createBoard,
@@ -1225,6 +1306,7 @@ module.exports = {setSocketInstance, register, login,createBoard,
 board, updateBoard,getSingleTicket,getMyTickets, updateTicket,assignUserToTicket,
 removeUserFromTicket,getUserProfile, updateUserProfile, deleteUser,
 getNotifications,createNotification,markNotificationRead, deleteNotification,
-generateTicketsFromPrompt, getUserBasicInfoById, addComment, getCommentsForTicket,
-getCommentsForTicket,deleteComment,getTicketAssignees};
+generateTicketsFromPrompt, getUserBasicInfoById, addComment,
+getCommentsForTicket,deleteComment,getTicketAssignees,generateDailyStandup,
+getMyTicketsForBoard};
 
