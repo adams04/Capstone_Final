@@ -1,50 +1,37 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { 
   FiLayout, FiFolder, FiCheckSquare, FiCalendar, 
   FiMessageSquare, FiSettings, FiPlus, FiTrash2, 
   FiEdit2, FiUsers, FiChevronDown, FiUserPlus 
 } from 'react-icons/fi';
-import { authAPI, boardAPI } from '../services/api';
+import { authAPI, boardAPI, taskAPI } from '../services/api';
 import '../styles/sidebar.css';
 import '../styles/top-navigation.css';
 import '../styles/projects.css';
 
-/**
- * Main board/projects management component
- * Handles project creation, editing, deletion and member management
- */
 const ProjectsPage = () => {
-  // State management
+  const navigate = useNavigate();
   const [projects, setProjects] = useState([]);
   const [members, setMembers] = useState([]);
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  
-  // UI state
   const [activeNav, setActiveNav] = useState('projects');
   const [activeFilter, setActiveFilter] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedMembers, setSelectedMembers] = useState([]);
   const [selectedProject, setSelectedProject] = useState(null);
-  
-  // Modal states
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showAddMemberModal, setShowAddMemberModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showMembersModal, setShowMembersModal] = useState(false);
-  const [showProjectMenu, setShowProjectMenu] = useState(null);
-  
-  // Form states
   const [newProjectName, setNewProjectName] = useState('');
   const [editProjectName, setEditProjectName] = useState('');
   const [newMemberEmail, setNewMemberEmail] = useState('');
   const [projectToDelete, setProjectToDelete] = useState(null);
 
-  /**
-   * Fetch user data and projects on component mount
-   */
   useEffect(() => {
     const fetchInitialData = async () => {
       const token = localStorage.getItem('token');
@@ -69,34 +56,38 @@ const ProjectsPage = () => {
     fetchInitialData();
   }, []);
 
-  /**
-   * Fetch projects for the current user
-   * @param {string} email - User's email
-   */
   const fetchProjects = async (email) => {
     try {
       const userProjects = await boardAPI.getByUser(email);
-      setProjects(userProjects);
+      const projectsWithCounts = await Promise.all(userProjects.map(async project => {
+        try {
+          const tickets = await taskAPI.getTickets(project._id);
+          return {
+            ...project,
+            tasksDone: tickets.filter(t => t.status === 'Done').length,
+            totalTasks: tickets.length
+          };
+        } catch (err) {
+          console.error(`Failed to fetch tickets for project ${project._id}:`, err);
+          return {
+            ...project,
+            tasksDone: 0,
+            totalTasks: 0
+          };
+        }
+      }));
+      setProjects(projectsWithCounts);
     } catch (err) {
       setError('Failed to load projects');
     }
   };
 
-  /**
-   * Fetch member data for the selected project
-   */
   useEffect(() => {
-    if (selectedProject?.members) {
+    if (selectedProject && showMembersModal) {
       fetchMemberData(selectedProject.members);
-    } else {
-      setMembers([]);
     }
-  }, [selectedProject?.members]);
+  }, [selectedProject, showMembersModal]);
 
-  /**
-   * Fetch detailed member information
-   * @param {Array} memberIds - Array of member IDs
-   */
   const fetchMemberData = async (memberIds) => {
     try {
       setLoading(true);
@@ -129,9 +120,6 @@ const ProjectsPage = () => {
     }
   };
 
-  /**
-   * Create a new project
-   */
   const createProject = async () => {
     if (!newProjectName.trim()) return;
     
@@ -159,9 +147,6 @@ const ProjectsPage = () => {
     }
   };
 
-  /**
-   * Update project name
-   */
   const updateProject = async () => {
     if (!editProjectName.trim() || !selectedProject) return;
     setLoading(true);
@@ -182,15 +167,12 @@ const ProjectsPage = () => {
     }
   };
 
-  /**
-   * Delete a project
-   * @param {string} projectId - ID of project to delete
-   */
   const deleteProject = async (projectId) => {
     setLoading(true);
     try {
       await boardAPI.delete(projectId);
       setProjects(projects.filter(project => project._id !== projectId));
+      setShowDeleteModal(false);
       setError('');
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to delete project');
@@ -200,11 +182,9 @@ const ProjectsPage = () => {
     }
   };
 
-  /**
-   * Add member to project
-   */
   const addMemberToProject = async () => {
     if (!newMemberEmail.trim() || !selectedProject) return;
+    
     setLoading(true);
     try {
       await boardAPI.updateBoard(selectedProject._id, { 
@@ -222,72 +202,64 @@ const ProjectsPage = () => {
     }
   };
 
-  /**
-   * Remove members from project
-   * @param {Array} memberIds - Array of member IDs to remove
-   */
-  const handleRemoveMembers = async (memberIds) => {
-    if (!memberIds?.length || !selectedProject?._id) return;
+  const handleRemoveMembers = async () => {
+    if (!selectedMembers.length || !selectedProject?._id) return;
     
+    setLoading(true);
     try {
-      setLoading(true);
-      
-      const membersToRemove = members
-        .filter(member => memberIds.includes(member._id))
-        .map(member => member.email);
-
-      await boardAPI.updateBoard(selectedProject._id, {
-        removeMembers: membersToRemove
+      // First remove members from all tickets in the project
+      const tickets = await taskAPI.getTickets(selectedProject._id);
+      const removePromises = tickets.map(ticket => {
+        return Promise.all(selectedMembers.map(email => {
+          return taskAPI.removeUserFromTicket(ticket._id, { email })
+            .catch(err => console.error(`Failed to remove user from ticket ${ticket._id}:`, err));
+        }));
       });
-
-      setMembers(prev => prev.filter(m => !memberIds.includes(m._id)));
-      setProjects(prev => prev.map(p => 
-        p._id === selectedProject._id
-          ? { ...p, members: p.members.filter(id => 
-              !memberIds.includes(id.toString())) }
-          : p
-      ));
+      
+      await Promise.all(removePromises);
+      
+      // Then remove members from the board
+      await boardAPI.updateBoard(selectedProject._id, {
+        removeMembers: selectedMembers
+      });
+      
+      // Refresh data
+      const updatedProject = await boardAPI.getBoard(selectedProject._id);
+      await fetchMemberData(updatedProject.members);
+      await fetchProjects(user.email);
       
       setSelectedMembers([]);
-    } catch (err) {
-      setError(err.response?.data?.message || "Failed to remove members");
+      setError('');
+    } catch (error) {
+      // Revert on error
+      const updatedProject = await boardAPI.getBoard(selectedProject._id);
+      await fetchMemberData(updatedProject.members);
+      setError(error.response?.data?.message || 'Failed to remove members');
     } finally {
       setLoading(false);
     }
   };
 
-    /**
-   * Handle project edit click
-   * @param {Object} project - The project to edit
-   */
   const handleEditClick = (project) => {
     setSelectedProject(project);
     setEditProjectName(project.name);
     setShowEditModal(true);
-    setShowProjectMenu(null);
   };
 
-  /**
-   * Handle project delete click
-   * @param {Object} project - The project to delete
-   */
   const handleDeleteClick = (project) => {
     setProjectToDelete(project);
     setShowDeleteModal(true);
-    setShowProjectMenu(null);
   };
 
-  // Filter projects based on active filter
   const filteredProjects = activeFilter === 'all' 
     ? projects 
     : projects.filter(p => p.type === activeFilter);
 
-  if (loading) return <div className="loading">Loading...</div>;
+  if (loading && !projects.length) return <div className="loading">Loading...</div>;
   if (!user) return <div className="error">Failed to load user information</div>;
 
   return (
     <div className="app-container">
-      {/* Sidebar Navigation */}
       <nav className="sidebar">
         <ul className="sidebar-menu">
           {[
@@ -310,7 +282,6 @@ const ProjectsPage = () => {
         </ul>
       </nav>
   
-      {/* Main Content Area */}
       <div className="content-area">
         <header className="top-nav">
           <div className="nav-brand">
@@ -356,12 +327,22 @@ const ProjectsPage = () => {
           
           <div className="projects-grid">
             {filteredProjects.map(project => (
-              <div key={project._id} className="project-card">
+              <div 
+                key={project._id} 
+                className="project-card"
+                onClick={() => navigate(`/tasks/${project._id}`)}
+              >
                 <div className="project-actions">
-                  <button onClick={() => handleEditClick(project)}>
+                  <button onClick={(e) => {
+                    e.stopPropagation();
+                    handleEditClick(project);
+                  }}>
                     <FiEdit2 />
                   </button>
-                  <button onClick={() => handleDeleteClick(project)}>
+                  <button onClick={(e) => {
+                    e.stopPropagation();
+                    handleDeleteClick(project);
+                  }}>
                     <FiTrash2 />
                   </button>
                 </div>
@@ -373,7 +354,8 @@ const ProjectsPage = () => {
                   <span>Tasks done: {project.tasksDone || 0}/{project.totalTasks || 0}</span>
                   <button 
                     className="add-member-btn"
-                    onClick={() => {
+                    onClick={(e) => {
+                      e.stopPropagation();
                       setSelectedProject(project);
                       setShowMembersModal(true);
                     }}
@@ -387,7 +369,6 @@ const ProjectsPage = () => {
         </main>
       </div>
 
-      {/* Modals */}
       {showCreateModal && (
         <div className="modal-overlay">
           <div className="create-modal">
@@ -455,7 +436,7 @@ const ProjectsPage = () => {
       )}
 
       {showAddMemberModal && selectedProject && (
-       <div className="modal-overlay" style={{ zIndex: 2001 }}>
+        <div className="modal-overlay" style={{ zIndex: 2001 }}>
           <div className="edit-modal">
             <h2>Add member</h2>
             <div className="input-spacer">
@@ -490,71 +471,96 @@ const ProjectsPage = () => {
       {showMembersModal && selectedProject && (
         <div className="modal-overlay">
           <div className="members-modal">
-            <h2>Your Board Members</h2>
+            <div className="members-modal-header">
+              <h2>Project Members</h2>
+            </div>
+            
             <input
               type="text"
-              placeholder="Search by name"
+              placeholder="Search by name or email"
               className="members-search"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
             
-            <button 
-              className="add-member-btn"
-              onClick={() => setShowAddMemberModal(true)
-              }
-              style={{ marginLeft: 'auto' }}
-            >
-              Add member
-            </button>
-
-            {loading && <div className="loading-indicator">Processing...</div>}
-            {error && <div className="error-message">{error}</div>}
-
-            {members.length > 0 ? (
+            <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '15px' }}>
+              <button 
+                className="add-member-btn"
+                onClick={() => setShowAddMemberModal(true)}
+              >
+                Add member
+              </button>
+            </div>
+            
+            {loading ? (
+              <div className="loading-indicator">Loading members...</div>
+            ) : error ? (
+              <div className="error-message">{error}</div>
+            ) : members?.length > 0 ? (
               <div className="members-list">
-                {members.map((member) => (
-                  <div key={member._id} className="member-item">
-                    <input
-                      type="checkbox"
-                      className="member-checkbox"
-                      checked={selectedMembers.includes(member._id)}
-                      onChange={() => {
-                        setSelectedMembers(prev => 
-                          prev.includes(member._id)
-                            ? prev.filter(id => id !== member._id)
-                            : [...prev, member._id]
-                        );
-                      }}
-                      disabled={loading}
-                    />
-                    <div className="member-details">
-                      <span className="member-name">{member.name}</span>
-                      <span className="member-email">{member.email}</span>
-                    </div>
-                  </div>
-                ))}
+                {members
+                  .filter(member => {
+                    const name = member?.name || 'No name';
+                    const email = member?.email || 'No email';
+                    const search = searchTerm.toLowerCase();
+                    return (
+                      name.toLowerCase().includes(search) ||
+                      email.toLowerCase().includes(search)
+                    );
+                  })
+                  .map((member) => {
+                    const displayName = member?.name || 'No name';
+                    const displayEmail = member?.email || 'No email';
+                    
+                    return (
+                      <div key={member?._id || displayEmail} className="member-item">
+                        <input
+                          type="checkbox"
+                          className="member-checkbox"
+                          checked={selectedMembers.includes(displayEmail)}
+                          onChange={() => {
+                            if (!displayEmail || displayEmail === 'No email') return;
+                            setSelectedMembers(prev => 
+                              prev.includes(displayEmail)
+                                ? prev.filter(email => email !== displayEmail)
+                                : [...prev, displayEmail]
+                            );
+                          }}
+                        />
+                        <div className="member-details">
+                          <span className="member-name">
+                            {displayName}
+                          </span>
+                          <span className="member-email">
+                            {displayEmail}
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })}
               </div>
             ) : (
-              <p className="no-members">No members yet.</p>
+              <p className="no-members">No members in this project.</p>
             )}
             
             <div className="members-modal-footer">
               <button
-                className="close-btn"
-                onClick={() => setShowMembersModal(false)}
-                disabled={loading}
+                className="modal-btn cancel-btn"
+                onClick={() => {
+                  setShowMembersModal(false);
+                  setSelectedMembers([]);
+                }}
               >
                 Close
               </button>
               
               {selectedMembers.length > 0 && (
                 <button
-                  className="delete-btn"
-                  onClick={() => handleRemoveMembers(selectedMembers)}
+                  className="modal-btn submit-btn"
+                  onClick={handleRemoveMembers}
                   disabled={loading}
                 >
-                  {loading ? 'Removing...' : `Delete (${selectedMembers.length})`}
+                  {loading ? 'Removing...' : `Remove (${selectedMembers.length})`}
                 </button>
               )}
             </div>

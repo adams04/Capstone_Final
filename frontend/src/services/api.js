@@ -84,6 +84,10 @@ export const boardAPI = {
     const { data } = await API.get('/auth/boards');
     return data;
   },
+  getBoard: async (boardId) => {
+    const { data } = await API.get(`/auth/${boardId}`);
+    return data;
+  },
   getByUser: async (email) => {
     const { data } = await API.get(`/auth/users/${email}/boards`);
     return data;
@@ -110,5 +114,114 @@ export const boardAPI = {
     }
   }
 };
+
+// In your api.js file, add these to the taskAPI object:
+
+export const taskAPI = {
+
+  getTickets: async (boardId) => {
+    try {
+      if (!boardId || !isValidObjectId(boardId)) {
+        throw new Error('Invalid board ID');
+      }
+      const { data } = await API.get(`/auth/tickets/${boardId}`);
+      return data;
+    } catch (error) {
+      console.error('GET Tickets Error:', error);
+      throw error;
+    }
+  },
+
+  createTicket: async (taskData) => {
+    try {
+      // Validate required fields
+      if (!taskData.title?.trim() || !taskData.boardId) {
+        throw new Error('Title and board ID are required');
+      }
+
+      const payload = {
+        title: taskData.title.trim(),
+        description: taskData.description || '',
+        boardId: taskData.boardId,
+        status: taskData.status || 'To Do',
+        priority: taskData.priority || 'Medium',
+        deadline: taskData.deadline || null,
+        assignedToEmails: taskData.assignedToEmails
+      };
+      
+      console.log(payload);
+      const { data } = await API.post('/auth/create-ticket', payload);
+      return data;
+      
+      
+    } catch (error) {
+      console.error('Create Ticket Error:', {
+        request: error.config?.data,
+        response: error.response?.data
+      });
+      throw error;
+    }
+    
+  },
+
+  updateTicket: async (id, data) => {
+    try {
+      const response = await API.put(`/auth/tickets/${id}`, data);
+      return response.data;
+    } catch (error) {
+      console.error('Update failed - Full error:', {
+        config: error.config,
+        response: error.response?.data,
+        status: error.response?.status
+      });
+      throw error;
+    }
+  },
+
+  getTicketAssignees:async (ticketId) => {
+    try {
+      const { data } = await API.get(`/auth/tickets/${ticketId}/assignees`);
+      return data;
+    } catch (error) {
+      console.error('Get Assignees Error:', error);
+      throw error;
+    }
+  },
+
+  deleteTicket: async (ticketId) => {
+    try {
+      const { data } = await API.delete(`/auth/delete-ticket/${ticketId}`);
+      return data;
+    } catch (error) {
+      console.error('Delete Ticket Error:', error);
+      throw error;
+    }
+  },
+
+  assignUserToTicket: async (ticketId, { email }) => {
+    try {
+      const { data } = await API.put(`/auth/tickets/${ticketId}/assign`, { email });
+      return data;
+    } catch (error) {
+      console.error('Assign User Error:', error);
+      throw error;
+    }
+  },
+
+  removeUserFromTicket: async (ticketId, { email }) => {
+    try {
+      const { data } = await API.put(`/auth/tickets/${ticketId}/remove`, { email });
+      return data;
+    } catch (error) {
+      console.error('Remove User Error:', error);
+      throw error;
+    }
+  }
+};
+
+
+function isValidObjectId(id) {
+  return /^[0-9a-fA-F]{24}$/.test(id);
+}
 
 export default API;

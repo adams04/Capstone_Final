@@ -453,31 +453,59 @@ const deleteBoard = async (req, res) => {
 // Create ticket
 const createTicket = async (req, res) => {
     try {
-        const {title, description, status, assignedToEmails, boardId, priority, deadline} = req.body;
+        console.log("Request body:", req.body);
+        const { title, description, status, assignedToEmails, boardId, priority, deadline } = req.body;
 
-        // Check if board exists
-        const board = await Board.findById(boardId);
+        // Validate required fields
+        if (!title?.trim() || !boardId) {
+            return res.status(400).json({ message: "Title and board ID are required." });
+        }
+
+        // Check if board exists and populate members
+        const board = await Board.findById(boardId).populate('members');
         if (!board) {
-            return res.status(404).send("Board not found.");
+            return res.status(404).json({ message: "Board not found." });
         }
 
         // Validate assigned users
         let assignedUserIds = [];
         if (assignedToEmails && assignedToEmails.length > 0) {
-            const assignedUsers = await User.find({email: {$in: assignedToEmails
-                        .map(email => email.toLowerCase())}});
+            // Find users by exact email match
+            const assignedUsers = await User.find({ 
+                email: { $in: assignedToEmails } 
+            });
 
+            // Check if all emails were found
             if (assignedUsers.length !== assignedToEmails.length) {
-                return res.status(400).send("Some assigned users not found.");
+                const foundEmails = assignedUsers.map(user => user.email);
+                const missingEmails = assignedToEmails.filter(email => 
+                    !foundEmails.includes(email)
+                );
+                return res.status(400).json({ 
+                    message: "Some assigned users not found in database.",
+                    missingEmails
+                });
             }
 
-            // Ensure all assigned users are part of the board
-            const validUsers = assignedUsers.filter(user =>
-                board.members.includes(user._id) || board.owner.equals(user._id)
-            );
+            // Convert board members and owner to string IDs for comparison
+            const boardMemberIds = board.members.map(member => member._id.toString());
+            const boardOwnerId = board.owner._id.toString();
+
+            // Check board membership
+            const validUsers = assignedUsers.filter(user => {
+                const userId = user._id.toString();
+                return boardMemberIds.includes(userId) || userId === boardOwnerId;
+            });
 
             if (validUsers.length !== assignedUsers.length) {
-                return res.status(403).send("One or more assigned users are not part of this board.");
+                const invalidUsers = assignedUsers.filter(user => {
+                    const userId = user._id.toString();
+                    return !boardMemberIds.includes(userId) && userId !== boardOwnerId;
+                });
+                return res.status(403).json({
+                    message: "Some users are not board members",
+                    invalidUsers: invalidUsers.map(u => u.email)
+                });
             }
 
             assignedUserIds = validUsers.map(user => user._id);
@@ -485,34 +513,52 @@ const createTicket = async (req, res) => {
 
         // Create the ticket
         const ticket = new Ticket({
-            title,
-            description,
-            status,
+            title: title.trim(),
+            description: description || '',
+            status: status || 'To Do',
             assignedTo: assignedUserIds,
             boardId,
-            priority,
-            deadline
+            priority: priority || 'Medium',
+            deadline: deadline || null
         });
 
         await ticket.save();
 
+        // Update board statistics
         board.ticketCount = (board.ticketCount || 0) + 1;
         if (ticket.status === 'Done') {
             board.completedTicketCount = (board.completedTicketCount || 0) + 1;
         }
         await board.save();
 
-        // Notify all assigned users
-        await notifyAssignedUsers(assignedUserIds, title);
+        // Notify assigned users
+        if (assignedUserIds.length > 0) {
+            await notifyAssignedUsers(assignedUserIds, title);
+        }
 
-        const populatedTicket = await Ticket.findById(ticket._id).populate("assignedTo", "name email");
-        res.status(201).json(populatedTicket);
+        const populatedTicket = await Ticket.findById(ticket._id)
+            .populate("assignedTo", "name email")
+            .populate("boardId", "title members"); // Add board population
+
+        res.status(201).json({
+            message: "Ticket created successfully",
+            ticket: {
+                ...populatedTicket.toObject(),
+                // Ensure all fields needed for editing are included
+                assignedToEmails: assignedToEmails || [], // Include email list
+                board: populatedTicket.boardId, // Flatten board reference
+            }
+        });
 
     } catch (error) {
         console.error("Error creating ticket:", error);
-        res.status(500).send("Error creating ticket.");
+        res.status(500).json({ 
+            message: "Error creating ticket.",
+            error: error.message,
+            stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+        });
     }
-}
+};
 
 // Get tickets of the board
 const getTickets = async (req, res) => {
@@ -595,83 +641,136 @@ const getMyTickets = async (req, res) => {
 // update ticket
 const updateTicket = async (req, res) => {
     try {
+
+        console.log('Update ticket request:', {
+            params: req.params,
+            body: req.body
+        });
+
         const { ticketId } = req.params;
-        const {
-            title,
-            description,
-            status,
-            priority,
-            deadline,
-            assignedToEmails
-        } = req.body;
+        const updates = req.body;
 
         // Validate ticket ID
         if (!mongoose.Types.ObjectId.isValid(ticketId)) {
-            return res.status(400).send("Invalid ticket ID.");
+            return res.status(400).json({ error: "Invalid ticket ID" });
         }
 
-        // Find the ticket
+        // Find and validate ticket
         const ticket = await Ticket.findById(ticketId);
         if (!ticket) {
-            return res.status(404).send("Ticket not found.");
+            return res.status(404).json({ error: "Ticket not found" });
         }
 
-        // Find the board to validate assigned users
+        // Find and validate board
         const board = await Board.findById(ticket.boardId);
         if (!board) {
-            return res.status(404).send("Board not found.");
+            return res.status(404).json({ error: "Board not found" });
         }
 
-        // Update assignedTo if emails are provided
-        let assignedUserIds = ticket.assignedTo; // Keep current users if not updated
-        if (assignedToEmails && assignedToEmails.length > 0) {
-            const assignedUsers = await User.find({ email: { $in: assignedToEmails } });
+        // Handle assigned users update
+        if (updates.assignedToEmails?.length > 0) {
 
-            if (assignedUsers.length !== assignedToEmails.length) {
-                return res.status(400).send("Some assigned users not found.");
+            console.log('Processing assigned emails:', updates.assignedToEmails);
+            const assignedUsers = await User.find({ 
+                email: { $in: updates.assignedToEmails } 
+            });
+
+            console.log('Found users:', assignedUsers.map(u => u.email));
+
+            // Validate all users exist
+            if (assignedUsers.length !== updates.assignedToEmails.length) {
+                const foundEmails = assignedUsers.map(u => u.email);
+                const missingEmails = updates.assignedToEmails.filter(
+                    email => !foundEmails.includes(email)
+                );
+                return res.status(400).json({ 
+                    error: "Some users not found",
+                    missingEmails
+                });
             }
 
-            const validUsers = assignedUsers.filter(user =>
-                board.members.includes(user._id) || board.owner.equals(user._id)
+            // Validate board membership
+            const invalidUsers = assignedUsers.filter(user =>
+                !board.members.includes(user._id) && !board.owner.equals(user._id)
             );
-
-            if (validUsers.length !== assignedUsers.length) {
-                return res.status(403).send("One or more assigned users are not part of this board.");
+            
+            if (invalidUsers.length > 0) {
+                return res.status(403).json({
+                    error: "Users not in board",
+                    invalidUsers: invalidUsers.map(u => u.email)
+                });
             }
 
-            assignedUserIds = validUsers.map(user => user._id);
+            updates.assignedTo = assignedUsers.map(user => user._id);
+            console.log('Final assignedTo IDs:', updates.assignedTo);
         }
 
+        // Handle status change
         const oldStatus = ticket.status;
+        let statusChanged = false;
 
-        // Update ticket fields
-        if (title !== undefined) ticket.title = title;
-        if (description !== undefined) ticket.description = description;
-        if (status !== undefined) ticket.status = status;
-        if (priority !== undefined) ticket.priority = priority;
-        if (deadline !== undefined) ticket.deadline = deadline;
-        ticket.assignedTo = assignedUserIds;
+        if (updates.status && updates.status !== oldStatus) {
+            // Normalize status values
+            updates.status = updates.status === 'Completed' ? 'Done' : updates.status;
+            statusChanged = true;
 
+            // Initialize counter if undefined
+            if (board.completedTicketCount === undefined) {
+                board.completedTicketCount = 0;
+            }
+
+            // Update completion count
+            if (updates.status === 'Done') {
+                board.completedTicketCount += 1;
+            } else if (oldStatus === 'Done') {
+                board.completedTicketCount = Math.max(0, board.completedTicketCount - 1);
+            }
+        }
+
+        // Apply updates
+        Object.assign(ticket, updates);
         await ticket.save();
 
-        if (status !== undefined && status !== oldStatus) {
-            if (status === 'Done' && oldStatus !== 'Done') {
-                board.completedTicketCount = (board.completedTicketCount || 0) + 1;
-            } else if (oldStatus === 'Done' && status !== 'Done') {
-                board.completedTicketCount = Math.max(0, (board.completedTicketCount || 0) - 1);
-            }
+        // Save board if status changed
+        if (statusChanged) {
             await board.save();
         }
-        // Notify all assigned users
-        const notificationResults = await notifyAssignedUsers(assignedUserIds, title);
 
-        // Populate updated ticket
-        const updatedTicket = await Ticket.findById(ticket._id).populate("assignedTo", "name email");
+        // Attempt notifications (but don't fail if this fails)
+        try {
+            if (updates.assignedTo || statusChanged) {
+                await notifyAssignedUsers(
+                    updates.assignedTo || ticket.assignedTo,
+                    `Ticket updated: ${ticket.title}`,
+                    statusChanged ? `Status changed to ${updates.status}` : null
+                );
+            }
+        } catch (notifyError) {
+            console.error("Notification failed:", notifyError);
+            // Continue even if notifications fail
+        }
 
-        res.status(200).json(updatedTicket);
+        // Return populated ticket
+        const updatedTicket = await Ticket.findById(ticket._id)
+            .populate("assignedTo", "name email")
+            .populate("boardId", "name");
+
+        res.status(200).json({
+            ...updatedTicket.toObject(),
+            // Map status back to frontend convention
+            status: updatedTicket.status === 'Done' ? 'Completed' : updatedTicket.status
+        });
+
     } catch (error) {
-        console.error("Error updating ticket:", error);
-        res.status(500).send("Error updating ticket.");
+        console.error("Error updating ticket:", {
+            error: error.message,
+            stack: error.stack,
+            body: req.body
+        });
+        res.status(500).json({ 
+            error: "Internal server error",
+            details: process.env.NODE_ENV === 'development' ? error.message : undefined
+        });
     }
 };
 
@@ -712,7 +811,7 @@ const deleteTicket = async (req, res) => {
     }
 };
 
-// Get ticket assignee name and email given the ticketId
+// Get ticket assigned name and email given the ticketId
 const getTicketAssignees = async (req, res) => {
     try {
         const ticketId = req.params.ticketId;

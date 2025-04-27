@@ -45,11 +45,18 @@ body {
   transition: transform 0.2s, box-shadow 0.2s;
   border: 1px solid var(--border-dark);
   position: relative;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
 }
 
 .project-card:hover {
   transform: translateY(-3px);
-  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.project-actions button,
+.add-member-btn {
+  cursor: default;
 }
 
 .project-name {
@@ -193,6 +200,14 @@ body {
   gap: 0.3rem;
   cursor: pointer;
   font-size: 0.85rem;
+  justify-content: flex-end;
+  margin-bottom: 15px;
+}
+
+.add-member-container {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 15px;
 }
 
 /* ======================== */
