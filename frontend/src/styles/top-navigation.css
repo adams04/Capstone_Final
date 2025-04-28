@@ -69,10 +69,12 @@ html, body {
   transition: all 0.3s ease;
   font-weight: 500;
   border: none;
-  font-size: 1rem;
+  font-size: 1rem; 
+  border-radius: 25px;
 }
 
 .logout-btn:hover {
-  background: #B50D8A;
+  background: linear-gradient(90deg, #4E01FD 0%, #E81352 100%);
   color: #fff;
+  border-radius: 25px;
 }

@@ -8,10 +8,19 @@ const SignUpPage = () => {
     name: '',
     email: '',
     password: '',
-    confirmPassword: ''
+    confirmPassword: '',
+    profession: 'developer' // Default value
   });
   const [error, setError] = useState('');
   const navigate = useNavigate();
+
+  const professions = [
+    { value: 'developer', label: 'Developer' },
+    { value: 'designer', label: 'Designer' },
+    { value: 'project-manager', label: 'Project Manager' },
+    { value: 'qa-engineer', label: 'QA Engineer' },
+    { value: 'devops', label: 'DevOps' }
+  ];
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -32,7 +41,8 @@ const SignUpPage = () => {
       const response = await authAPI.register({
         name: formData.name,
         email: formData.email,
-        password: formData.password
+        password: formData.password,
+        profession: formData.profession
       });
       
       localStorage.setItem('token', response.token);
@@ -44,12 +54,12 @@ const SignUpPage = () => {
   };
 
   return (
-    <div className="login-page"> {/* Use login-page class for consistent layout */}
-      <div className="login-form-container"> {/* Use login-form-container for consistent styling */}
-        <h2 className="login-title">Sign Up</h2> {/* Use login-title class */}
+    <div className="login-page">
+      <div className="login-form-container">
+        <h2 className="login-title">Sign Up</h2>
         {error && <div className="error-message">{error}</div>}
         
-        <form className="login-form" onSubmit={handleSubmit}> {/* Use login-form class */}
+        <form className="login-form" onSubmit={handleSubmit}>
           <div className="input-group">
             <input
               type="text"
@@ -71,6 +81,21 @@ const SignUpPage = () => {
               onChange={handleChange}
               required
             />
+          </div>
+          <div className="input-group">
+            <select
+              name="profession"
+              className="login-input"
+              value={formData.profession}
+              onChange={handleChange}
+              required
+            >
+              {professions.map((profession) => (
+                <option key={profession.value} value={profession.value}>
+                  {profession.label}
+                </option>
+              ))}
+            </select>
           </div>
           <div className="input-group">
             <input

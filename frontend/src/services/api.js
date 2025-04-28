@@ -267,6 +267,38 @@ export const taskAPI = {
       throw error;
     }
   },
+
+  generateTicketsFromPrompt: async (boardId, { description }) => {
+    try {
+      const { data } = await API.post(`/auth/ai-helper/${boardId}`, { description });
+      return data;
+    } catch (error) {
+      console.error('AI Task Generation Error:', {
+        request: { boardId, description },
+        response: error.response?.data,
+        status: error.response?.status
+      });
+      throw error;
+    }
+  },
+
+  generateDailyStandup: async (boardId) => {
+    try {
+      const { data } = await API.get(`/auth/ai-standup/${boardId}`);
+      // Ensure the response matches what your backend sends
+      if (!data.standup) {
+        throw new Error('Standup content not found in response');
+      }
+      return {
+        standup: data.standup,
+        message: data.message || 'Standup generated successfully'
+      };
+    } catch (error) {
+      console.error('Standup Generation Error:', error);
+      throw error;
+    }
+  },
+
 };
 
 

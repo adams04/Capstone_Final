@@ -6,6 +6,7 @@ import {
   FiEdit2, FiUsers, FiUserPlus 
 } from 'react-icons/fi';
 import { authAPI, taskAPI, boardAPI } from '../services/api';
+import AIChatBot from './AIChatBot';
 import '../styles/sidebar.css';
 import '../styles/top-navigation.css';
 import '../styles/tasks.css';
@@ -59,6 +60,73 @@ const TasksPage = () => {
     status: 'To Do'
   });
 
+  const [messages, setMessages] = useState({
+    tasks: [
+      { text: "Hello! I'm your AI Task Generator. Describe the project you need done.", sender: 'bot' }
+    ],
+    standup: [
+      { text: "Hi! I'm your Standup Generator. I'll help you summarize your daily progress.", sender: 'bot' }
+    ]
+  });
+
+  const generateTasksFromPrompt = (prompt) => {
+    taskAPI.generateTicketsFromPrompt(boardId, { description: prompt })
+      .then(() => {
+        setTimeout(() => {
+          fetchTasks();
+        }, 500);
+      })
+      .catch((error) => {
+        setError(error.response?.data?.message || 'Failed to generate tasks');
+      });
+  };
+
+  const generateStandup = () => {
+    // Show loading state
+    setMessages(prev => ({
+      ...prev,
+      standup: [...prev.standup, 
+        { text: "Generating your standup summary...", sender: 'bot' }
+      ]
+    }));
+  
+    taskAPI.generateDailyStandup(boardId)
+      .then(response => {
+        // Replace loading message with actual standup
+        setMessages(prev => {
+          const updatedStandup = [...prev.standup];
+          // Remove loading message if it exists
+          if (updatedStandup.length > 1) {
+            updatedStandup.pop();
+          }
+          return {
+            ...prev,
+            standup: [...updatedStandup, 
+              { text: response.standup, sender: 'bot' }
+            ]
+          };
+        });
+      })
+      .catch(error => {
+        // Remove loading message and show error
+        setMessages(prev => {
+          const updatedStandup = [...prev.standup];
+          if (updatedStandup.length > 1) {
+            updatedStandup.pop();
+          }
+          return {
+            ...prev,
+            standup: [...updatedStandup, 
+              { text: "Sorry, I couldn't generate the standup. Please try again later.", sender: 'bot' }
+            ]
+          };
+        });
+        console.error('Standup generation failed:', error);
+      });
+  };
+  
+  
+
   // Comment state
   const [comments, setComments] = useState([]);
   const [newComment, setNewComment] = useState('');
@@ -95,6 +163,8 @@ const TasksPage = () => {
 
     fetchData();
   }, [boardId, navigate]);
+
+  
 
   useEffect(() => {
     const fetchAssignees = async () => {
@@ -346,7 +416,7 @@ const TasksPage = () => {
     setLoading(true);
     try {
       const formData = new FormData();
-      formData.append('userId', user._id);
+      formData.append('userId', user.id);
       formData.append('text', newComment);
       if (commentFile) {
         formData.append('attachment', commentFile);
@@ -761,13 +831,13 @@ const TasksPage = () => {
                       <span className="comment-date">
                         {new Date(comment.createdAt).toLocaleString()}
                       </span>
-                      {comment.user?._id === user._id && (
+                      {comment.user?.id === user.id && (
                         <button 
                           className="delete-comment-btn"
                           onClick={() => deleteComment(comment._id)}
                           disabled={loading}
                         >
-                          Delete
+                          ×
                         </button>
                       )}
                     </div>
@@ -1067,6 +1137,12 @@ const TasksPage = () => {
           </div>
         </div>
       )}
+      <AIChatBot 
+        onGenerateTasks={generateTasksFromPrompt}
+        onGenerateStandup={generateStandup}
+        messages={messages}
+        setMessages={setMessages}
+        />
     </div>
   );
 };

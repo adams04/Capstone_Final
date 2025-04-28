@@ -1,5 +1,5 @@
- /* ===== BASE STYLES ===== */
- * {
+/* ===== BASE STYLES ===== */
+* {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
@@ -16,49 +16,45 @@ html, body {
 
 /* ===== NAVBAR ===== */
 .navbar {
-display: flex;
-justify-content: space-between;
-align-items: center;
-padding: 0.5rem 1.5rem; /* Reduced vertical padding */
-position: fixed;
-width: 85%;
-max-width: 1200px;
-left: 50%;
-transform: translateX(-50%);
-top: 1rem; /* Reduced from 2rem */
-background: #301E38;
-border-radius: 50px;
-z-index: 1000;
-height: 60px; /* Fixed height */
-display: flex;
-align-items: center;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 1.5rem;
+  position: fixed;
+  width: 85%;
+  max-width: 1200px;
+  left: 50%;
+  transform: translateX(-50%);
+  top: 1rem;
+  background: #301E38;
+  border-radius: 50px;
+  z-index: 1000;
+  height: 60px;
 }
 
 .logo {
-font-size: 1.5rem; /* Reduced from 1.8rem */
-font-weight: 700;
-color: #B50D8A;
-line-height: 1; /* Ensures consistent height */
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #B50D8A;
+  line-height: 1;
 }
 
-.login-btn,  .signup-btn {
-text-decoration: none;
-background: transparent;
-color: white;
-border: none;
-border-radius: 25px;
-padding: 0.6rem 1.5rem;
-font-size: 1rem;
-font-weight: 600;
-cursor: pointer;
-transition: all 0.3s ease;
+.login-btn, .signup-btn {
+  text-decoration: none;
+  background: transparent;
+  color: white;
+  border: none;
+  border-radius: 25px;
+  padding: 0.6rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
 }
-
 
 .signup-btn {
   background: linear-gradient(to right, #4E01FD, #E81352);
 }
-
 
 /* ===== HERO SECTION ===== */
 .hero-section {
@@ -144,11 +140,11 @@ transition: all 0.3s ease;
   height: 100vh;
   width: 100vw;
   display: flex;
-  justify-content: flex-end; /* Push content to the right */
-  align-items: flex-start;   /* Push content to the top */
+  justify-content: flex-end;
+  align-items: flex-start;
   background: url('../../public/images/frame9.svg') no-repeat center center;
   background-size: cover;
-  padding: 4rem 6rem; /* Space from top and right edge */
+  padding: 4rem 6rem;
 }
 
 .login-form-container {
@@ -190,10 +186,50 @@ transition: all 0.3s ease;
   background-color: white;
   color: #333;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  width: 100%;
+}
+
+/* Enhanced Select Dropdown Styles */
+select.login-input {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%23333' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 1rem center;
+  background-size: 12px;
+  padding-right: 2.5rem;
+  cursor: pointer;
+}
+
+/* Dropdown Options Styling */
+select.login-input option {
+  padding: 0.8rem;
+  background: white;
+  color: #333;
+  font-size: 1rem;
+}
+
+/* Focus States */
+.login-input:focus,
+select.login-input:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(78, 1, 253, 0.3);
 }
 
 .login-input::placeholder {
   color: #999;
+  opacity: 1;
+}
+
+/* Label Styles */
+.input-label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+  color: #fff;
+  font-size: 0.95rem;
+  padding-left: 0.5rem;
 }
 
 .login-submit-btn {
@@ -206,12 +242,13 @@ transition: all 0.3s ease;
   font-size: 1.1rem;
   font-weight: 600;
   cursor: pointer;
-  transition: background 0.3s ease;
+  transition: all 0.3s ease;
   margin-top: 0.5rem;
 }
 
 .login-submit-btn:hover {
   opacity: 0.9;
+  transform: translateY(-1px);
 }
 
 .signup-link {
@@ -225,8 +262,23 @@ transition: all 0.3s ease;
   color: #B50D8A;
   font-weight: 600;
   text-decoration: none;
+  transition: color 0.2s ease;
 }
 
 .signup-link-text:hover {
   text-decoration: underline;
+  color: #d4119a;
+}
+
+/* Error Message Styling */
+.error-message {
+  color: #ff4d4d;
+  background: rgba(255, 77, 77, 0.1);
+  padding: 0.8rem 1rem;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+  font-size: 0.9rem;
+  width: 100%;
+  text-align: center;
+  border: 1px solid rgba(255, 77, 77, 0.2);
 }
