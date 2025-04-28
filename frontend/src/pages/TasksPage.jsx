@@ -30,7 +30,7 @@ const TasksPage = () => {
   const [selectedMembers, setSelectedMembers] = useState([]);
   const [selectedTask, setSelectedTask] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
-  const [taskAssignees, setTaskAssignees] = useState([])
+  const [taskAssignees, setTaskAssignees] = useState([]);
   
   // Modal states
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -38,6 +38,7 @@ const TasksPage = () => {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showMembersModal, setShowMembersModal] = useState(false);
   const [showAddMemberModal, setShowAddMemberModal] = useState(false);
+  const [showCommentsModal, setShowCommentsModal] = useState(false);
   
   // Form states
   const [newTask, setNewTask] = useState({
@@ -57,6 +58,11 @@ const TasksPage = () => {
     assignedToEmails: [],
     status: 'To Do'
   });
+
+  // Comment state
+  const [comments, setComments] = useState([]);
+  const [newComment, setNewComment] = useState('');
+  const [commentFile, setCommentFile] = useState(null);
 
   // Email input state
   const [emailInput, setEmailInput] = useState('');
@@ -136,6 +142,20 @@ const TasksPage = () => {
     }
   };
 
+  // Fetch comments for a task
+  const fetchComments = async (taskId) => {
+    try {
+      setLoading(true);
+      const taskComments = await taskAPI.getCommentsForTicket(taskId);
+      setComments(taskComments);
+    } catch (err) {
+      setError('Failed to load comments');
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Handle task creation
   const createTask = async () => {
     if (!newTask.title.trim()) {
@@ -155,20 +175,14 @@ const TasksPage = () => {
         status: 'To Do'
       });
   
-      // Ensure the created task has all required fields
       const completeTask = {
         ...createdTask,
-        // Add fallbacks for any potentially missing fields
         assignedTo: createdTask.assignedTo || [],
         boardId: createdTask.boardId || boardId,
-        _id: createdTask._id // Ensure ID exists
+        _id: createdTask._id
       };
   
-      // Update state in two ways:
-      // 1. Immediate optimistic update
       setTasks(prev => [completeTask, ...prev]);
-      
-      // 2. Force refetch to ensure synchronization
       await fetchTasks();
   
       setShowCreateModal(false);
@@ -186,8 +200,6 @@ const TasksPage = () => {
       const errorMessage = error.response?.data?.error || 
                          'Failed to create task. Please check assigned users.';
       setError(errorMessage);
-      
-      // Revert optimistic update if needed
       await fetchTasks();
     } finally {
       setLoading(false);
@@ -199,11 +211,9 @@ const TasksPage = () => {
     if (!editTask.title.trim() || !selectedTask) return;
     
     setLoading(true);
-    // Store previous state at the beginning of the function
-    const previousTasks = tasks; // Use the current state
+    const previousTasks = tasks;
     
     try {
-      // Optimistic update
       setTasks(prev => prev.map(task => 
         task._id === selectedTask._id ? {
           ...task,
@@ -222,7 +232,6 @@ const TasksPage = () => {
         status: editTask.status
       });
   
-      // Final update with server response
       setTasks(prev => prev.map(task => 
         task._id === selectedTask._id ? {
           ...updatedTask,
@@ -235,7 +244,6 @@ const TasksPage = () => {
       setSelectedTask(null);
       setError('');
     } catch (error) {
-      // Rollback on error
       setTasks(previousTasks);
       setError(error.response?.data?.error || 'Failed to update task');
     } finally {
@@ -243,35 +251,6 @@ const TasksPage = () => {
     }
   };
 
-  // Handle task deletion
-  const deleteTask = async () => {
-    if (!selectedTask) return;
-    
-    setLoading(true);
-    // Store previous state at the beginning of the function
-    const previousTasks = tasks; // Use the current state
-    
-    try {
-      // Optimistic update
-      setTasks(prev => prev.filter(task => task._id !== selectedTask._id));
-  
-      await taskAPI.deleteTicket(selectedTask._id);
-      
-      // Confirm deletion with a fresh fetch
-      await fetchTasks();
-      
-      setShowDeleteModal(false);
-      setSelectedTask(null);
-    } catch (error) {
-      // Rollback on error
-      setTasks(previousTasks);
-      setError('Failed to delete task');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Handle adding member to task
   const addMemberToTask = async () => {
     if (!newMemberEmail.trim() || !selectedTask) return;
     
@@ -339,7 +318,70 @@ const TasksPage = () => {
     }
   };
 
+  // Handle task deletion
+  const deleteTask = async () => {
+    if (!selectedTask) return;
+    
+    setLoading(true);
+    const previousTasks = tasks;
+    
+    try {
+      setTasks(prev => prev.filter(task => task._id !== selectedTask._id));
+      await taskAPI.deleteTicket(selectedTask._id);
+      await fetchTasks();
+      setShowDeleteModal(false);
+      setSelectedTask(null);
+    } catch (error) {
+      setTasks(previousTasks);
+      setError('Failed to delete task');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Handle adding comment
+  const addComment = async () => {
+    if (!newComment.trim() || !selectedTask) return;
+    
+    setLoading(true);
+    try {
+      const formData = new FormData();
+      formData.append('userId', user._id);
+      formData.append('text', newComment);
+      if (commentFile) {
+        formData.append('attachment', commentFile);
+      }
   
+      const createdComment = await taskAPI.addComment(selectedTask._id, formData);
+      
+      setComments(prev => [createdComment, ...prev]);
+      setNewComment('');
+      setCommentFile(null);
+      setError('');
+    } catch (error) {
+      console.error('Error adding comment:', error);
+      setError(error.response?.data?.message || 'Failed to add comment');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Handle deleting comment
+  const deleteComment = async (commentId) => {
+    if (!commentId || !selectedTask) return;
+    
+    setLoading(true);
+    try {
+      await taskAPI.deleteComment(selectedTask._id, commentId);
+      setComments(prev => prev.filter(comment => comment._id !== commentId));
+    } catch (error) {
+      setError('Failed to delete comment');
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Email input handlers
   const handleEmailKeyDown = (e) => {
     if (['Enter', 'Tab', ','].includes(e.key)) {
@@ -383,6 +425,13 @@ const TasksPage = () => {
     return re.test(email);
   };
 
+  // Handle file selection for comments
+  const handleFileChange = (e) => {
+    if (e.target.files && e.target.files[0]) {
+      setCommentFile(e.target.files[0]);
+    }
+  };
+
   // Handle drag and drop
   const handleDragStart = (e, task) => {
     setDraggingTask(task);
@@ -410,7 +459,6 @@ const TasksPage = () => {
     
     setIsUpdatingStatus(true);
     try {
-      // Update local state immediately for responsive UI
       setTasks(prev => prev.map(task => 
         task._id === draggingTask._id ? { 
           ...task, 
@@ -418,13 +466,11 @@ const TasksPage = () => {
         } : task
       ));
       
-      // Then make the API call
       await taskAPI.updateTicket(draggingTask._id, {
         status: newStatus === 'Completed' ? 'Done' : newStatus
       });
     } catch (err) {
       setError('Failed to update task status');
-      // Revert if API call fails
       setTasks(prev => prev.map(task => 
         task._id === draggingTask._id ? { ...task, status: draggingTask.status } : task
       ));
@@ -479,13 +525,23 @@ const TasksPage = () => {
   
       {/* Main Content Area */}
       <div className="content-area">
+      // In BoardPage.jsx, update the top-nav section:
         <header className="top-nav">
-          <div className="nav-brand">
+        <div className="nav-brand">
             <h1>TaskFlow</h1>
-          </div>
-          <div className="user-display">
+        </div>
+        <div className="user-display">
             <span className="user-name">{user.name}</span>
-          </div>
+            <button 
+            className="logout-btn"
+            onClick={() => {
+                localStorage.removeItem('token');
+                window.location.href = '/';
+            }}
+            >
+            Logout
+            </button>
+        </div>
         </header>
 
         <div className="board-header">
@@ -555,6 +611,14 @@ const TasksPage = () => {
                         setShowMembersModal(true);
                       }}>
                         <FiUsers />
+                      </button>
+                      <button onClick={async (e) => {
+                        e.stopPropagation();
+                        setSelectedTask(task);
+                        await fetchComments(task._id);
+                        setShowCommentsModal(true);
+                      }}>
+                        <FiMessageSquare />
                       </button>
                     </div>
                     <h4 className="task-title">{task.title}</h4>
@@ -666,6 +730,109 @@ const TasksPage = () => {
         </div>
       )}
 
+      {/* Comments Modal */}
+      {showCommentsModal && selectedTask && (
+        <div className="modal-overlay">
+          <div className="comments-modal">
+            <div className="comments-modal-header">
+              <h2>Comments for: {selectedTask.title}</h2>
+              <button 
+                className="close-modal-btn"
+                onClick={() => {
+                  setShowCommentsModal(false);
+                  setComments([]);
+                  setSelectedTask(null);
+                }}
+              >
+                ×
+              </button>
+            </div>
+            
+            <div className="comments-container">
+              {loading ? (
+                <div className="loading-indicator">Loading comments...</div>
+              ) : comments.length > 0 ? (
+                comments.map(comment => (
+                  <div key={comment._id} className="comment-item">
+                    <div className="comment-header">
+                      <span className="comment-author">
+                        {comment.user?.name || 'Unknown user'}
+                      </span>
+                      <span className="comment-date">
+                        {new Date(comment.createdAt).toLocaleString()}
+                      </span>
+                      {comment.user?._id === user._id && (
+                        <button 
+                          className="delete-comment-btn"
+                          onClick={() => deleteComment(comment._id)}
+                          disabled={loading}
+                        >
+                          Delete
+                        </button>
+                      )}
+                    </div>
+                    <div className="comment-text">{comment.text}</div>
+                    {comment.attachment && (
+                      <div className="comment-attachment">
+                        <a 
+                          href={`/uploads/${comment.attachment}`} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                        >
+                          View Attachment
+                        </a>
+                      </div>
+                    )}
+                  </div>
+                ))
+              ) : (
+                <div className="no-comments">No comments yet</div>
+              )}
+            </div>
+            
+            <div className="add-comment-section">
+              <textarea
+                placeholder="Add a comment..."
+                className="comment-input"
+                value={newComment}
+                onChange={(e) => setNewComment(e.target.value)}
+                disabled={loading}
+              />
+              <div className="comment-actions">
+                <div className="file-upload">
+                  <label>
+                    <input 
+                      type="file" 
+                      onChange={handleFileChange}
+                      disabled={loading}
+                    />
+                    Attach File
+                  </label>
+                  {commentFile && (
+                    <span className="file-name">
+                      {commentFile.name}
+                      <button 
+                        onClick={() => setCommentFile(null)}
+                        className="remove-file-btn"
+                      >
+                        ×
+                      </button>
+                    </span>
+                  )}
+                </div>
+                <button
+                  className="add-comment-btn"
+                  onClick={addComment}
+                  disabled={!newComment.trim() || loading}
+                >
+                  {loading ? 'Posting...' : 'Post Comment'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Edit Task Modal */}
       {showEditModal && selectedTask && (
         <div className="modal-overlay">
@@ -763,107 +930,106 @@ const TasksPage = () => {
 
       {/* Task Members Modal */}
       {showMembersModal && selectedTask && (
-  <div className="modal-overlay">
-    <div className="members-task-modal">
-      <div className="members-task-modal-header">
-        <h2>Task Members</h2>
-      </div>
-      
-      {/* Search bar now at the top */}
-      <input
-        type="text"
-        placeholder="Search by name or email"
-        className="members-task-search"
-        value={searchTerm}
-        onChange={(e) => setSearchTerm(e.target.value)}
-      />
-      
-      {/* Add member button moved below search bar */}
-      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '15px' }}>
-        <button 
-          className="add-member-task-btn"
-          onClick={() => setShowAddMemberModal(true)}
-        >
-          Add member
-        </button>
-      </div>
-      
-      {loading ? (
-        <div className="loading-indicator">Loading members...</div>
-      ) : error ? (
-        <div className="error-message">{error}</div>
-      ) : taskAssignees?.length > 0 ? (
-        <div className="members-task-list">
-          {taskAssignees
-            .filter(assignee => {
-              const name = assignee?.name || 'No name';
-              const email = assignee?.email || 'No email';
-              const search = searchTerm.toLowerCase();
-              return (
-                name.toLowerCase().includes(search) ||
-                email.toLowerCase().includes(search)
-              );
-            })
-            .map((assignee) => {
-              const displayName = assignee?.name || 'No name';
-              const displayEmail = assignee?.email || 'No email';
+        <div className="modal-overlay">
+          <div className="members-task-modal">
+            <div className="members-task-modal-header">
+              <h2>Task Members</h2>
+            </div>
+            
+            <input
+              type="text"
+              placeholder="Search by name or email"
+              className="members-task-search"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+            
+            <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '15px' }}>
+              <button 
+                className="add-member-task-btn"
+                onClick={() => setShowAddMemberModal(true)}
+              >
+                Add member
+              </button>
+            </div>
+            
+            {loading ? (
+              <div className="loading-indicator">Loading members...</div>
+            ) : error ? (
+              <div className="error-message">{error}</div>
+            ) : taskAssignees?.length > 0 ? (
+              <div className="members-task-list">
+                {taskAssignees
+                  .filter(assignee => {
+                    const name = assignee?.name || 'No name';
+                    const email = assignee?.email || 'No email';
+                    const search = searchTerm.toLowerCase();
+                    return (
+                      name.toLowerCase().includes(search) ||
+                      email.toLowerCase().includes(search)
+                    );
+                  })
+                  .map((assignee) => {
+                    const displayName = assignee?.name || 'No name';
+                    const displayEmail = assignee?.email || 'No email';
+                    
+                    return (
+                      <div key={assignee?._id || displayEmail} className="member-task-item">
+                        <input
+                          type="checkbox"
+                          className="member-task-checkbox"
+                          checked={selectedMembers.includes(displayEmail)}
+                          onChange={() => {
+                            if (!displayEmail || displayEmail === 'No email') return;
+                            setSelectedMembers(prev => 
+                              prev.includes(displayEmail)
+                                ? prev.filter(email => email !== displayEmail)
+                                : [...prev, displayEmail]
+                            );
+                          }}
+                        />
+                        <div className="member-task-details">
+                          <span className="member-task-name">
+                            {displayName}
+                          </span>
+                          <span className="member-task-email">
+                            {displayEmail}
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })}
+              </div>
+            ) : (
+              <p className="no-members">No members assigned to this task.</p>
+            )}
+            
+            <div className="members-task-modal-footer">
+              <button
+                className="modal-btn cancel-btn"
+                onClick={() => {
+                  setShowMembersModal(false);
+                  setSelectedMembers([]);
+                  setTaskAssignees([]);
+                }}
+              >
+                Close
+              </button>
               
-              return (
-                <div key={assignee?._id || displayEmail} className="member-task-item">
-                  <input
-                    type="checkbox"
-                    className="member-task-checkbox"
-                    checked={selectedMembers.includes(displayEmail)}
-                    onChange={() => {
-                      if (!displayEmail || displayEmail === 'No email') return;
-                      setSelectedMembers(prev => 
-                        prev.includes(displayEmail)
-                          ? prev.filter(email => email !== displayEmail)
-                          : [...prev, displayEmail]
-                      );
-                    }}
-                  />
-                  <div className="member-task-details">
-                    <span className="member-task-name">
-                      {displayName}
-                    </span>
-                    <span className="member-task-email">
-                      {displayEmail}
-                    </span>
-                  </div>
-                </div>
-              );
-            })}
+              {selectedMembers.length > 0 && (
+                <button
+                  className="modal-btn submit-btn"
+                  onClick={removeMembersFromTask}
+                  disabled={loading}
+                >
+                  {loading ? 'Removing...' : `Remove (${selectedMembers.length})`}
+                </button>
+              )}
+            </div>
+          </div>
         </div>
-      ) : (
-        <p className="no-members">No members assigned to this task.</p>
       )}
-      
-      <div className="members-task-modal-footer">
-        <button
-          className="modal-btn cancel-btn"
-          onClick={() => {
-            setShowMembersModal(false);
-            setSelectedMembers([]);
-            setTaskAssignees([]);
-          }}
-        >
-          Close
-        </button>
-        
-        {selectedMembers.length > 0 && (
-          <button
-            className="modal-btn submit-btn"
-            onClick={removeMembersFromTask}
-            disabled={loading}
-          >
-            {loading ? 'Removing...' : `Remove (${selectedMembers.length})`}
-          </button>
-        )}
-      </div>
-    </div>
-  </div>
-)}
+
       {/* Add Member Modal */}
       {showAddMemberModal && selectedTask && (
         <div className="modal-overlay">

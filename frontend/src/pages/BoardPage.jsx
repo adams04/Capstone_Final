@@ -283,12 +283,22 @@ const ProjectsPage = () => {
       </nav>
   
       <div className="content-area">
+      // In TasksPage.jsx, update the top-nav section:
         <header className="top-nav">
           <div className="nav-brand">
             <h1>TaskFlow</h1>
           </div>
           <div className="user-display">
             <span className="user-name">{user.name}</span>
+            <button 
+              className="logout-btn"
+              onClick={() => {
+                localStorage.removeItem('token');
+                window.location.href = '/';
+              }}
+            >
+              Logout
+            </button>
           </div>
         </header>
   

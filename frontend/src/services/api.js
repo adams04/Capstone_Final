@@ -216,7 +216,57 @@ export const taskAPI = {
       console.error('Remove User Error:', error);
       throw error;
     }
-  }
+  },
+
+  // Get comments for a ticket
+  getCommentsForTicket: async (ticketId) => {
+    try {
+      const response = await API.get(`/auth/tickets/${ticketId}/comments`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('token')}`,
+        },
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching comments:', error);
+      throw error;
+    }
+  },
+
+  // Add a comment to a ticket
+  addComment: async (ticketId, formData) => {
+    try {
+      const response = await API.post(
+        `/auth/tickets/${ticketId}/comments`,
+        formData,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+            Authorization: `Bearer ${localStorage.getItem('token')}`,
+          },
+        }
+      );
+      return response.data;
+    } catch (error) {
+      console.error('Error adding comment:', error);
+      throw error;
+    }
+  },
+
+  // Delete a comment
+  deleteComment: async (ticketId, commentId) => {
+    try {
+      const response = await API.delete(`/auth/tickets/${ticketId}/comments/${commentId}`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('token')}`,
+        },
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error deleting comment:', error);
+      throw error;
+    }
+  },
 };
 
 

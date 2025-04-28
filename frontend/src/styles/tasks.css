@@ -484,3 +484,215 @@ input[type="date"]:focus {
     font-weight: 500;
     display: block;
 }
+
+/* Comments Modal Styles */
+.comments-modal {
+    background: #252927;
+    border-radius: 16px;
+    padding: 1.5rem;
+    width: 90%;
+    max-width: 600px;
+    max-height: 80vh;
+    display: flex;
+    flex-direction: column;
+    color: #B9B9B9;
+  }
+  
+  .comments-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #444;
+  }
+  
+  .comments-modal-header h2 {
+    margin: 0;
+    font-size: 1.3rem;
+    color: #B9B9B9;
+  }
+  
+  .close-modal-btn {
+    background: none;
+    border: none;
+    color: #B9B9B9;
+    font-size: 1.5rem;
+    cursor: pointer;
+    padding: 0.5rem;
+  }
+  
+  .comments-container {
+    flex: 1;
+    overflow-y: auto;
+    margin-bottom: 1rem;
+    padding-right: 0.5rem;
+  }
+  
+  .comment-item {
+    background: #363937;
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    border-left: 3px solid #B50D8A;
+  }
+  
+  .comment-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+  }
+  
+  .comment-author {
+    font-weight: 600;
+    color: #B9B9B9;
+  }
+  
+  .comment-date {
+    color: #888;
+    font-size: 0.8rem;
+  }
+  
+  .delete-comment-btn {
+    background: #92155170;
+    border: none;
+    color: white;
+    padding: 0.3rem 0.6rem;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    cursor: pointer;
+  }
+  
+  .delete-comment-btn:hover {
+    background: #921551;
+  }
+  
+  .comment-text {
+    margin: 0.5rem 0;
+    line-height: 1.4;
+    color: #ddd;
+  }
+  
+  .comment-attachment a {
+    color: #B50D8A;
+    text-decoration: none;
+    font-size: 0.9rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+  }
+  
+  .comment-attachment a:hover {
+    text-decoration: underline;
+  }
+  
+  .add-comment-section {
+    margin-top: 1rem;
+    border-top: 1px solid #444;
+    padding-top: 1rem;
+  }
+  
+  .comment-input {
+    width: 100%;
+    padding: 0.8rem;
+    border-radius: 6px;
+    border: 1px solid #444;
+    background-color: #363937;
+    color: #B9B9B9;
+    margin-bottom: 0.5rem;
+    min-height: 80px;
+    resize: vertical;
+  }
+  
+  .comment-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  
+  .file-upload {
+    position: relative;
+  }
+  
+  .file-upload input[type="file"] {
+    position: absolute;
+    left: 0;
+    top: 0;
+    opacity: 0;
+    width: 0.1px;
+    height: 0.1px;
+  }
+  
+  .file-upload label {
+    display: inline-block;
+    padding: 0.5rem 1rem;
+    background: #363937;
+    color: #B9B9B9;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    border: 1px dashed #444;
+  }
+  
+  .file-upload label:hover {
+    background: #444;
+  }
+  
+  .file-name {
+    font-size: 0.8rem;
+    margin-left: 0.5rem;
+    color: #B9B9B9;
+    display: inline-flex;
+    align-items: center;
+  }
+  
+  .remove-file-btn {
+    background: none;
+    border: none;
+    color: #B50D8A;
+    margin-left: 0.3rem;
+    cursor: pointer;
+    padding: 0;
+  }
+  
+  .add-comment-btn {
+    background: linear-gradient(90deg, #4E01FD 0%, #E81352 100%);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 0.5rem 1rem;
+    font-weight: 500;
+    cursor: pointer;
+  }
+  
+  .add-comment-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+  
+  .no-comments {
+    text-align: center;
+    color: #888;
+    padding: 2rem 0;
+  }
+  
+  /* Scrollbar styles */
+  .comments-container::-webkit-scrollbar {
+    width: 8px;
+  }
+  
+  .comments-container::-webkit-scrollbar-track {
+    background: #363937;
+    border-radius: 4px;
+  }
+  
+  .comments-container::-webkit-scrollbar-thumb {
+    background: #B50D8A;
+    border-radius: 4px;
+  }
+  
+  .comments-container::-webkit-scrollbar-thumb:hover {
+    background: #921551;
+  }
