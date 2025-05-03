@@ -1059,92 +1059,101 @@ const openai = new OpenAI({
 const generateTicketsFromPrompt = async (req, res) => {
     const { boardId } = req.params;
     const { description } = req.body;
-  
-  
+
     try {
-      const board = await Board.findById(boardId).populate('members', 'email profession name');
-  
-      if (!board) {
-        return res.status(404).json({ message: "Board not found" });
-      }
-  
-      if (!description || description.trim().length < 10) {
-        return res.status(400).json({ message: "Task description is too short." });
-      }
-  
-      const aiResponse = await openai.chat.completions.create({
-        model: "gpt-4",
-        messages: [
-          {
-            role: "system",
-            content: `You're an AI project manager assistant. Given a prompt, break it into specific tasks, each with a title, optional description, profession (developer, designer, project-manager, qa-engineer, devops), and optional priority. Output should be a JSON array like:
-            [
-              { "title": "Design homepage layout", "description": "...", "profession": "designer", "priority": "medium" },
-              ...
-            ]`
-          },
-          {
-            role: "user",
-            content: description
-          }
-        ]
-      });
-  
-      const aiText = aiResponse.choices[0]?.message?.content?.trim();
-      console.log('AI Response Text:', aiText);
-  
-      let tasks = [];
-      try {
-        tasks = JSON.parse(aiText);
-        console.log('Parsed tasks:', tasks);
-      } catch (error) {
-        console.error("Error parsing AI response:", error);
-        tasks = [];
-      }
-  
-      const validStatuses = ["To Do", "In Progress", "Done"];
-      const validPriorities = ["Low", "Medium", "High"];
-  
-      const createdTickets = [];
-  
-      for (const task of tasks) {
-        console.log('Processing task:', task);
-  
-        const status = validStatuses.includes(task.status) ? task.status : "To Do";
-        const priority = validPriorities.includes(task.priority) ? task.priority : "Medium";
-  
-        const assignee = board.members.find(user => user.profession === task.profession);
-        if (!assignee) {
-          console.log('No assignee found for profession:', task.profession);
-          continue;
+        // Populate both members and owner with their professions
+        const board = await Board.findById(boardId)
+            .populate('members', 'email profession name')
+            .populate('owner', 'email profession name');
+
+        if (!board) {
+            return res.status(404).json({ message: "Board not found" });
         }
-  
-        const ticket = new Ticket({
-          title: task.title,
-          description: task.description || "",
-          status: status,
-          assignedTo: [assignee._id],
-          boardId: board._id,
-          priority: priority
+
+        if (!description || description.trim().length < 10) {
+            return res.status(400).json({ message: "Task description is too short." });
+        }
+
+        const aiResponse = await openai.chat.completions.create({
+            model: "gpt-4",
+            messages: [
+                {
+                    role: "system",
+                    content: `You're an AI project manager assistant. Given a prompt, break it into specific tasks, each with a title, optional description, profession (developer, designer, project-manager, qa-engineer, devops), and optional priority. Output should be a JSON array like:
+                    [
+                        { "title": "Design homepage layout", "description": "...", "profession": "designer", "priority": "medium" },
+                        ...
+                    ]`
+                },
+                {
+                    role: "user",
+                    content: description
+                }
+            ]
         });
-  
-        await ticket.save();
-        console.log('Saved ticket:', ticket);
-        createdTickets.push(ticket);
-      }
-  
-      console.log(`Successfully created ${createdTickets.length} tickets.`);
-  
-      res.status(201).json({
-        message: `Created ${createdTickets.length} task(s) from AI response.`,
-        tasks: createdTickets
-      });
-  
+
+        const aiText = aiResponse.choices[0]?.message?.content?.trim();
+        console.log('AI Response Text:', aiText);
+
+        let tasks = [];
+        try {
+            tasks = JSON.parse(aiText);
+            console.log('Parsed tasks:', tasks);
+        } catch (error) {
+            console.error("Error parsing AI response:", error);
+            tasks = [];
+        }
+
+        const validStatuses = ["To Do", "In Progress", "Done"];
+        const validPriorities = ["Low", "Medium", "High"];
+
+        const createdTickets = [];
+
+        // Combine members and owner into a single array of potential assignees
+        const allAssignees = [...board.members];
+        if (board.owner) {
+            allAssignees.push(board.owner);
+        }
+
+        for (const task of tasks) {
+            console.log('Processing task:', task);
+
+            const status = validStatuses.includes(task.status) ? task.status : "To Do";
+            const priority = validPriorities.includes(task.priority) ? task.priority : "Medium";
+
+            // Look for assignee in both members and owner
+            const assignee = allAssignees.find(user => user.profession === task.profession);
+            if (!assignee) {
+                console.log('No assignee found for profession:', task.profession);
+                continue;
+            }
+
+            const ticket = new Ticket({
+                title: task.title,
+                description: task.description || "",
+                status: status,
+                assignedTo: [assignee._id],
+                boardId: board._id,
+                priority: priority
+            });
+
+            await ticket.save();
+            console.log('Saved ticket:', ticket);
+            createdTickets.push(ticket);
+        }
+
+        console.log(`Successfully created ${createdTickets.length} tickets.`);
+
+        res.status(201).json({
+            message: `Created ${createdTickets.length} task(s) from AI response.`,
+            tasks: createdTickets
+        });
+
     } catch (err) {
-      console.error("AI Task Gen Error:", err.response?.data || err.message, err.stack);
-      res.status(500).json({ message: "Internal server error during AI task generation." });
+        console.error("AI Task Gen Error:", err.response?.data || err.message, err.stack);
+        res.status(500).json({ message: "Internal server error during AI task generation." });
     }
-  };
+};
   
 
 
