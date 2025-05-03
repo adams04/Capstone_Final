@@ -4,9 +4,14 @@ const bcrypt = require('bcrypt');
 
 const userSchema = new mongoose.Schema({
     name: { type: String, required: true },
-    surname: { type: String, required: false }, // Changed to not required
+    surname: { type: String, required: false },
     email: { type: String, required: true, unique: true },
-    passwordHash: { type: String, required: true },
+    passwordHash: {
+        type: String,
+        required: function () {
+            return !this._password;
+        }
+    },
     profession: {
         type: String,
         enum: ['developer', 'designer', 'project-manager', 'qa-engineer', 'devops'],
@@ -24,26 +29,31 @@ const userSchema = new mongoose.Schema({
     }
 }, { timestamps: true });
 
-// Password hashing middleware
+// 🔐 Virtual password field
+userSchema.virtual('password')
+    .set(function(password) {
+        this._password = password;
+    });
+
+// 🔐 Pre-save hook for hashing password
 userSchema.pre('save', async function(next) {
-    // Only hash if password is modified or new
-    if (!this.isModified('passwordHash')) return next();
-    
+    if (!this._password) return next(); // Only hash if virtual password is set
+
     try {
-        // Hash the plain text password
         const salt = await bcrypt.genSalt(10);
-        this.passwordHash = await bcrypt.hash(this.passwordHash, salt);
+        this.passwordHash = await bcrypt.hash(this._password, salt);
         next();
     } catch (err) {
         next(err);
     }
 });
-// Method to compare passwords
+
+//  Compare password method
 userSchema.methods.comparePassword = async function(candidatePassword) {
     if (!candidatePassword || !this.passwordHash) {
-      throw new Error('data and hash arguments required');
+        throw new Error('Missing password or hash');
     }
     return await bcrypt.compare(candidatePassword, this.passwordHash);
-  };
+};
 
 module.exports = mongoose.model('User', userSchema);

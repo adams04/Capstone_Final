@@ -7,7 +7,8 @@ const Ticket = require('../models/Ticket');
 const Notifications = require('../models/Notifications');
 const Comment = require('../models/Comment');
 const mongoose = require('mongoose');
-const { Types } = require('mongoose');
+const bcrypt = require('bcrypt');
+
 let io;
 
 function setSocketInstance(ioInstance) {
@@ -66,8 +67,8 @@ const notifyAssignedUsers = async (userIds, ticketTitle) => {
 // Register
 const register = async (req, res) => {
     try {
-        const { name, surname, email, password,profession, dateOfBirth } = req.body;
-        
+        const { name, surname, email, password, profession, dateOfBirth } = req.body;
+
         const existingUser = await User.findOne({ email });
         if (existingUser) {
             return res.status(400).json({ error: 'Email already in use' });
@@ -77,20 +78,15 @@ const register = async (req, res) => {
             name,
             surname,
             email,
-            passwordHash: password,
-            profession: profession,
+            password, // uses virtual
+            profession,
             dateOfBirth,
             settings: { theme: 'light' }
         });
 
         await user.save();
-        
-        // Generate token after successful registration
-        const token = jwt.sign(
-            { userId: user._id },
-            process.env.JWT_SECRET,
-            { expiresIn: '1h' }
-        );
+
+        const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
 
         res.status(201).json({
             token,
@@ -117,8 +113,11 @@ const login = async (req, res) => {
             return res.status(401).json({ error: 'Invalid credentials' });
         }
 
+        console.log('Login attempt:', { email, password }); // NEVER in production
+
         // Compare plain text password with stored hash
         const isMatch = await user.comparePassword(password);
+        console.log('Password match:', isMatch);
         if (!isMatch) {
             return res.status(401).json({ error: 'Invalid credentials' });
         }
@@ -175,7 +174,6 @@ const getUserBasicInfoById = async (req, res) => {
 };
 
 
-
 // Update User Profile
 const updateUserProfile = async (req, res) => {
     try {
@@ -200,6 +198,37 @@ const updateUserProfile = async (req, res) => {
         res.status(500).send("Error updating user profile.");
     }
 };
+
+
+// Controller for updating password
+const changePassword = async (req, res) => {
+    try {
+        const { oldPassword, newPassword } = req.body;
+
+        if (!oldPassword || !newPassword) {
+            return res.status(400).send("Old password and new password are required.");
+        }
+
+        const user = await User.findById(req.user._id);
+        if (!user) {
+            return res.status(404).send("User not found.");
+        }
+
+        const isMatch = await user.comparePassword(oldPassword);
+        if (!isMatch) {
+            return res.status(400).send("Old password is incorrect.");
+        }
+
+        user.password = newPassword; // ✅ Use virtual
+        await user.save();
+
+        res.status(200).send("Password updated successfully.");
+    } catch (err) {
+        console.error("Error changing password:", err);
+        res.status(500).send("Error changing password.");
+    }
+};
+
 
 
 // Delete User
@@ -1059,92 +1088,101 @@ const openai = new OpenAI({
 const generateTicketsFromPrompt = async (req, res) => {
     const { boardId } = req.params;
     const { description } = req.body;
-  
-  
+
     try {
-      const board = await Board.findById(boardId).populate('members', 'email profession name');
-  
-      if (!board) {
-        return res.status(404).json({ message: "Board not found" });
-      }
-  
-      if (!description || description.trim().length < 10) {
-        return res.status(400).json({ message: "Task description is too short." });
-      }
-  
-      const aiResponse = await openai.chat.completions.create({
-        model: "gpt-4",
-        messages: [
-          {
-            role: "system",
-            content: `You're an AI project manager assistant. Given a prompt, break it into specific tasks, each with a title, optional description, profession (developer, designer, project-manager, qa-engineer, devops), and optional priority. Output should be a JSON array like:
-            [
-              { "title": "Design homepage layout", "description": "...", "profession": "designer", "priority": "medium" },
-              ...
-            ]`
-          },
-          {
-            role: "user",
-            content: description
-          }
-        ]
-      });
-  
-      const aiText = aiResponse.choices[0]?.message?.content?.trim();
-      console.log('AI Response Text:', aiText);
-  
-      let tasks = [];
-      try {
-        tasks = JSON.parse(aiText);
-        console.log('Parsed tasks:', tasks);
-      } catch (error) {
-        console.error("Error parsing AI response:", error);
-        tasks = [];
-      }
-  
-      const validStatuses = ["To Do", "In Progress", "Done"];
-      const validPriorities = ["Low", "Medium", "High"];
-  
-      const createdTickets = [];
-  
-      for (const task of tasks) {
-        console.log('Processing task:', task);
-  
-        const status = validStatuses.includes(task.status) ? task.status : "To Do";
-        const priority = validPriorities.includes(task.priority) ? task.priority : "Medium";
-  
-        const assignee = board.members.find(user => user.profession === task.profession);
-        if (!assignee) {
-          console.log('No assignee found for profession:', task.profession);
-          continue;
+        // Populate both members and owner with their professions
+        const board = await Board.findById(boardId)
+            .populate('members', 'email profession name')
+            .populate('owner', 'email profession name');
+
+        if (!board) {
+            return res.status(404).json({ message: "Board not found" });
         }
-  
-        const ticket = new Ticket({
-          title: task.title,
-          description: task.description || "",
-          status: status,
-          assignedTo: [assignee._id],
-          boardId: board._id,
-          priority: priority
+
+        if (!description || description.trim().length < 10) {
+            return res.status(400).json({ message: "Task description is too short." });
+        }
+
+        const aiResponse = await openai.chat.completions.create({
+            model: "gpt-4",
+            messages: [
+                {
+                    role: "system",
+                    content: `You're an AI project manager assistant. Given a prompt, break it into specific tasks, each with a title, optional description, profession (developer, designer, project-manager, qa-engineer, devops), and optional priority. Output should be a JSON array like:
+                    [
+                        { "title": "Design homepage layout", "description": "...", "profession": "designer", "priority": "medium" },
+                        ...
+                    ]`
+                },
+                {
+                    role: "user",
+                    content: description
+                }
+            ]
         });
-  
-        await ticket.save();
-        console.log('Saved ticket:', ticket);
-        createdTickets.push(ticket);
-      }
-  
-      console.log(`Successfully created ${createdTickets.length} tickets.`);
-  
-      res.status(201).json({
-        message: `Created ${createdTickets.length} task(s) from AI response.`,
-        tasks: createdTickets
-      });
-  
+
+        const aiText = aiResponse.choices[0]?.message?.content?.trim();
+        console.log('AI Response Text:', aiText);
+
+        let tasks = [];
+        try {
+            tasks = JSON.parse(aiText);
+            console.log('Parsed tasks:', tasks);
+        } catch (error) {
+            console.error("Error parsing AI response:", error);
+            tasks = [];
+        }
+
+        const validStatuses = ["To Do", "In Progress", "Done"];
+        const validPriorities = ["Low", "Medium", "High"];
+
+        const createdTickets = [];
+
+        // Combine members and owner into a single array of potential assignees
+        const allAssignees = [...board.members];
+        if (board.owner) {
+            allAssignees.push(board.owner);
+        }
+
+        for (const task of tasks) {
+            console.log('Processing task:', task);
+
+            const status = validStatuses.includes(task.status) ? task.status : "To Do";
+            const priority = validPriorities.includes(task.priority) ? task.priority : "Medium";
+
+            // Look for assignee in both members and owner
+            const assignee = allAssignees.find(user => user.profession === task.profession);
+            if (!assignee) {
+                console.log('No assignee found for profession:', task.profession);
+                continue;
+            }
+
+            const ticket = new Ticket({
+                title: task.title,
+                description: task.description || "",
+                status: status,
+                assignedTo: [assignee._id],
+                boardId: board._id,
+                priority: priority
+            });
+
+            await ticket.save();
+            console.log('Saved ticket:', ticket);
+            createdTickets.push(ticket);
+        }
+
+        console.log(`Successfully created ${createdTickets.length} tickets.`);
+
+        res.status(201).json({
+            message: `Created ${createdTickets.length} task(s) from AI response.`,
+            tasks: createdTickets
+        });
+
     } catch (err) {
-      console.error("AI Task Gen Error:", err.response?.data || err.message, err.stack);
-      res.status(500).json({ message: "Internal server error during AI task generation." });
+        console.error("AI Task Gen Error:", err.response?.data || err.message, err.stack);
+        res.status(500).json({ message: "Internal server error during AI task generation." });
     }
-  };
+};
   
 
 
@@ -1358,6 +1396,33 @@ const uploadPicture = async (req, res) => {
 };
 
 
+// get calendar events
+const getUserCalendarEvents = async (req, res) => {
+    try {
+        const userId = req.user._id;
+
+        // Fetch only necessary fields and populate board name
+        const tickets = await Ticket.find({ assignedTo: userId })
+            .select('title deadline boardId') // Select only needed fields
+            .populate({
+                path: 'boardId',
+                select: 'name' // Get board name only
+            });
+
+        // Map into calendar event format
+        const events = tickets.map(ticket => ({
+            ticketName: ticket.title,
+            boardName: ticket.boardId?.name || 'N/A',
+            deadline: ticket.deadline
+        }));
+
+        res.json(events);
+    } catch (error) {
+        console.error('Error fetching calendar events:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+};
+
 
 
 module.exports = {setSocketInstance, register, login,createBoard,
@@ -1367,5 +1432,5 @@ removeUserFromTicket,getUserProfile, updateUserProfile, deleteUser,
 getNotifications,createNotification,markNotificationRead, deleteNotification,
 generateTicketsFromPrompt, getUserBasicInfoById, addComment,
 getCommentsForTicket,deleteComment,getTicketAssignees,generateDailyStandup,
-getMyTicketsForBoard, uploadPicture};
+getMyTicketsForBoard, uploadPicture, getUserCalendarEvents, changePassword};
 
