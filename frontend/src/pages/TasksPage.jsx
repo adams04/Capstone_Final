@@ -416,12 +416,11 @@ const TasksPage = () => {
     setLoading(true);
     try {
       const formData = new FormData();
-      formData.append('userId', user.id);
+      formData.append('userId', user._id);
       formData.append('text', newComment);
       if (commentFile) {
         formData.append('attachment', commentFile);
       }
-  
       const createdComment = await taskAPI.addComment(selectedTask._id, formData);
       
       setComments(prev => [createdComment, ...prev]);
