@@ -5,17 +5,18 @@ const connectDB = require('./config/db');
 const authRoutes = require('./routes/routes');
 const https = require('https');
 const { Server } = require('socket.io');
+const path = require('path');
+const { setSocketInstance } = require('./controllers/controllers');
+const { verify } = require("jsonwebtoken");
 
 const app = express();
 const server = https.createServer(app);
 const io = new Server(server);
-const { setSocketInstance } = require('./controllers/controllers');
-const {verify} = require("jsonwebtoken");
-require('dotenv').config();
+
+// Attach Socket.IO instance
 setSocketInstance(io);
 
-
-// Database connection
+// Connect to MongoDB
 connectDB();
 
 // Middleware
@@ -25,6 +26,20 @@ app.use(cors({
 }));
 app.use(express.json());
 
+// Static file serving for viewing in browser (not download)
+app.use('/Uploads/comments', express.static(path.join(__dirname, 'Uploads/comments')));
+
+// Route for downloading attachments
+app.get('/download/comment/:filename', (req, res) => {
+  const filePath = path.join(__dirname, 'Uploads/comments', req.params.filename);
+  res.download(filePath, req.params.filename, (err) => {
+    if (err) {
+      console.error('Download error:', err);
+      res.status(500).send('Could not download the file');
+    }
+  });
+});
+
 // Routes
 app.use('/api/auth', authRoutes);
 
@@ -32,32 +47,28 @@ app.use('/api/auth', authRoutes);
 io.on('connection', (socket) => {
   console.log('A user connected:', socket.id);
 
-  // Add authentication middleware for sockets
   socket.on('authenticate', (token) => {
     verify(token, process.env.JWT_SECRET, (err, decoded) => {
       if (err) return socket.disconnect();
 
-      // Join room with user ID
       socket.join(decoded.userId.toString());
       console.log(`User ${decoded.userId} connected to their room`);
     });
   });
+
   socket.on('disconnect', () => {
     console.log('User disconnected:', socket.id);
   });
 });
 
-
-
-// Error handling
+// Global error handler
 app.use((err, req, res, next) => {
   console.error(err.stack);
   res.status(500).json({ error: 'Internal server error' });
 });
 
+// Start server
 const PORT = process.env.PORT || 5001;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
-
-app.use('/Uploads/comments', express.static('Uploads/comments'));
