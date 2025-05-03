@@ -570,27 +570,28 @@ const TasksPage = () => {
   return (
     <div className="app-container">
       {/* Sidebar Navigation */}
-      <nav className="sidebar">
+
+        <nav className="sidebar">
         <ul className="sidebar-menu">
-          {[
-            { icon: <FiLayout />, name: 'Dashboard', id: 'dashboard' },
-            { icon: <FiFolder />, name: 'Projects', id: 'projects' },
-            { icon: <FiCheckSquare />, name: 'My Tasks', id: 'tasks' },
-            { icon: <FiCalendar />, name: 'Calendar', id: 'calendar' },
+            {[
+            { icon: <FiLayout />, name: 'Dashboard', id: 'dashboard', path: '/' },
+            { icon: <FiFolder />, name: 'Projects', id: 'projects', path: '/projects', active: true }, 
+            { icon: <FiCheckSquare />, name: 'My Tasks', id: 'tasks', path: `/tasks/${boardId}` },
+            { icon: <FiCalendar />, name: 'Calendar', id: 'calendar'},
             { icon: <FiMessageSquare />, name: 'Conversation', id: 'conversation' },
-            { icon: <FiSettings />, name: 'Settings', id: 'settings' }
-          ].map((item) => (
+            { icon: <FiSettings />, name: 'Settings', id: 'settings', path: '/settings' }
+            ].map((item) => (
             <li 
-              key={item.id}
-              className={`sidebar-item ${activeNav === item.id ? 'active' : ''}`}
-              onClick={() => setActiveNav(item.id)}
+                key={item.id}
+                className={`sidebar-item ${item.active ? 'active' : ''}`}
+                onClick={() => navigate(item.path)}
             >
-              <span className="sidebar-icon">{item.icon}</span>
-              {item.name}
+                <span className="sidebar-icon">{item.icon}</span>
+                {item.name}
             </li>
-          ))}
+            ))}
         </ul>
-      </nav>
+        </nav>
   
       {/* Main Content Area */}
       <div className="content-area">

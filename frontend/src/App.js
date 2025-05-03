@@ -4,7 +4,8 @@ import LandingPage from './pages/LandingPage';
 import LoginPage from './pages/LoginPage';
 import SignUpPage from './pages/SignUpPage';
 import BoardPage from './pages/BoardPage';
-import TasksPage from './pages/TasksPage'; // Import the TasksPage component
+import TasksPage from './pages/TasksPage'; 
+import SettingsPage from './pages/SettingsPage';
 import { AuthProvider } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
 
@@ -16,6 +17,8 @@ function App() {
           <Route path="/" element={<LandingPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/signup" element={<SignUpPage />} />
+          <Route path="/projects" element={<BoardPage />} />
+          <Route path="/settings" element={<SettingsPage />} />
           <Route 
             path="/board" 
             element={

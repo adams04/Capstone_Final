@@ -301,6 +301,43 @@ export const taskAPI = {
 
 };
 
+export const settingsAPI = {
+  updateUserProfile: async (userData) => {
+    try {
+      const response = await API.put('/auth/update-profile', userData);
+      return response.data;
+    } catch (error) {
+      console.error('Error updating profile:', error);
+      throw error; // Make sure to throw the error for handling in the component
+    }
+  },
+
+  uploadProfilePicture: async (formData) => {
+    try {
+      const response = await API.post('/auth/upload-profile-picture', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error uploading profile picture:', error);
+      throw error;
+    }
+  },
+
+  // Add this to prevent the need for page reload
+  getUserProfile: async () => {
+    try {
+      const response = await API.get('/auth/user-profile');
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching user profile:', error);
+      throw error;
+    }
+  }
+};
+
 
 function isValidObjectId(id) {
   return /^[0-9a-fA-F]{24}$/.test(id);

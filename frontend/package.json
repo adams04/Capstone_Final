@@ -8,6 +8,7 @@
     "@fontsource/signika": "^5.2.5",
     "axios": "^1.8.4",
     "react": "^18.2.0",
+    "react-datepicker": "^8.3.0",
     "react-dom": "^18.2.0",
     "react-icons": "^5.5.0",
     "react-router-dom": "^6.22.1",

@@ -260,30 +260,28 @@ const ProjectsPage = () => {
 
   return (
     <div className="app-container">
-      <nav className="sidebar">
-        <ul className="sidebar-menu">
-          {[
-            { icon: <FiLayout />, name: 'Dashboard', id: 'dashboard' },
-            { icon: <FiFolder />, name: 'Projects', id: 'projects' },
-            { icon: <FiCheckSquare />, name: 'My Tasks', id: 'tasks' },
-            { icon: <FiCalendar />, name: 'Calendar', id: 'calendar' },
-            { icon: <FiMessageSquare />, name: 'Conversation', id: 'conversation' },
-            { icon: <FiSettings />, name: 'Settings', id: 'settings' }
-          ].map((item) => (
-            <li 
-              key={item.id}
-              className={`sidebar-item ${activeNav === item.id ? 'active' : ''}`}
-              onClick={() => setActiveNav(item.id)}
-            >
-              <span className="sidebar-icon">{item.icon}</span>
-              {item.name}
-            </li>
-          ))}
-        </ul>
-      </nav>
-  
+           <nav className="sidebar">
+              <ul className="sidebar-menu">
+              {[
+                  { icon: <FiLayout />, name: 'Dashboard', id: 'dashboard' },
+                  { icon: <FiFolder />, name: 'Projects', id: 'projects', path: '/projects' },
+                  { icon: <FiCheckSquare />, name: 'My Tasks', id: 'tasks'},
+                  { icon: <FiCalendar />, name: 'Calendar', id: 'calendar' },
+                  { icon: <FiMessageSquare />, name: 'Conversation', id: 'conversation' },
+                  { icon: <FiSettings />, name: 'Settings', id: 'settings', path: '/settings' }
+              ].map((item) => (
+                  <li 
+                  key={item.id}
+                  className={`sidebar-item ${activeNav === item.id ? 'active' : ''}`}
+                  onClick={() => navigate(item.path)}
+                  >
+                  <span className="sidebar-icon">{item.icon}</span>
+                  {item.name}
+                  </li>
+              ))}
+              </ul>
+            </nav>
       <div className="content-area">
-      // In TasksPage.jsx, update the top-nav section:
         <header className="top-nav">
           <div className="nav-brand">
             <h1>TaskFlow</h1>
