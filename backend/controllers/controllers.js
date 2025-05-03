@@ -1367,6 +1367,33 @@ const uploadPicture = async (req, res) => {
 };
 
 
+// get calendar events
+const getUserCalendarEvents = async (req, res) => {
+    try {
+        const userId = req.user._id;
+
+        // Fetch only necessary fields and populate board name
+        const tickets = await Ticket.find({ assignedTo: userId })
+            .select('title deadline boardId') // Select only needed fields
+            .populate({
+                path: 'boardId',
+                select: 'name' // Get board name only
+            });
+
+        // Map into calendar event format
+        const events = tickets.map(ticket => ({
+            ticketName: ticket.title,   
+            boardName: ticket.boardId?.name || 'N/A',
+            deadline: ticket.deadline
+        }));
+
+        res.json(events);
+    } catch (error) {
+        console.error('Error fetching calendar events:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+};
+
 
 
 module.exports = {setSocketInstance, register, login,createBoard,
@@ -1376,5 +1403,5 @@ removeUserFromTicket,getUserProfile, updateUserProfile, deleteUser,
 getNotifications,createNotification,markNotificationRead, deleteNotification,
 generateTicketsFromPrompt, getUserBasicInfoById, addComment,
 getCommentsForTicket,deleteComment,getTicketAssignees,generateDailyStandup,
-getMyTicketsForBoard, uploadPicture};
+getMyTicketsForBoard, uploadPicture, getUserCalendarEvents};
 
