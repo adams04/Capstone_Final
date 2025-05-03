@@ -178,6 +178,20 @@ export const taskAPI = {
     }
   },
 
+  getMyTickets: async () => {
+    try {
+      const response = await API.get('/auth/my-tickets', {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching user tickets:', error);
+      throw error;
+    }
+  },
+
   getTicketAssignees:async (ticketId) => {
     try {
       const { data } = await API.get(`/auth/tickets/${ticketId}/assignees`);

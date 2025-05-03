@@ -6,6 +6,7 @@ import SignUpPage from './pages/SignUpPage';
 import BoardPage from './pages/BoardPage';
 import TasksPage from './pages/TasksPage'; 
 import SettingsPage from './pages/SettingsPage';
+import MyTasksPage from './pages/MyTasksPage';
 import { AuthProvider } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
 
@@ -19,6 +20,7 @@ function App() {
           <Route path="/signup" element={<SignUpPage />} />
           <Route path="/projects" element={<BoardPage />} />
           <Route path="/settings" element={<SettingsPage />} />
+          <Route path="/mytasks" element={<MyTasksPage />} />
           <Route 
             path="/board" 
             element={

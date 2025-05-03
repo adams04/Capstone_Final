@@ -96,7 +96,7 @@ const SettingsPage = () => {
     if (!file) return;
   
     const formData = new FormData();
-    formData.append('profileImage', file);
+    formData.append('file', file);
   
     try {
       setLoading(true);
@@ -121,7 +121,7 @@ const SettingsPage = () => {
           {[
             { icon: <FiLayout />, name: 'Dashboard', id: 'dashboard'},
             { icon: <FiFolder />, name: 'Projects', id: 'projects', path: '/projects' },
-            { icon: <FiCheckSquare />, name: 'My Tasks', id: 'tasks' },
+            { icon: <FiCheckSquare />, name: 'My Tasks', id: 'mytasks', path: '/mytasks' },
             { icon: <FiCalendar />, name: 'Calendar', id: 'calendar' },
             { icon: <FiMessageSquare />, name: 'Conversation', id: 'conversation'},
             { icon: <FiSettings />, name: 'Settings', id: 'settings', path: '/settings' }

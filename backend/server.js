@@ -29,6 +29,8 @@ app.use(express.json());
 // Static file serving for viewing in browser (not download)
 app.use('/Uploads/comments', express.static(path.join(__dirname, 'Uploads/comments')));
 
+app.use('/profilePictures', express.static(path.join(__dirname, 'Uploads/profilePictures')));
+
 // Route for downloading attachments
 app.get('/download/comment/:filename', (req, res) => {
   const filePath = path.join(__dirname, 'Uploads/comments', req.params.filename);

@@ -574,7 +574,7 @@ const TasksPage = () => {
             {[
             { icon: <FiLayout />, name: 'Dashboard', id: 'dashboard', path: '/' },
             { icon: <FiFolder />, name: 'Projects', id: 'projects', path: '/projects', active: true }, 
-            { icon: <FiCheckSquare />, name: 'My Tasks', id: 'tasks', path: `/tasks/${boardId}` },
+            { icon: <FiCheckSquare />, name: 'My Tasks', id: 'mytasks', path: '/mytasks' },
             { icon: <FiCalendar />, name: 'Calendar', id: 'calendar'},
             { icon: <FiMessageSquare />, name: 'Conversation', id: 'conversation' },
             { icon: <FiSettings />, name: 'Settings', id: 'settings', path: '/settings' }
