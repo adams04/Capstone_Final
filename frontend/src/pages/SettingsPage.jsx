@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { 
-    FiLayout, FiFolder, FiCheckSquare, FiCalendar, 
-    FiMessageSquare, FiSettings
+import {
+  FiLayout, FiFolder, FiCheckSquare, FiCalendar,
+  FiMessageSquare, FiSettings, FiLogOut
 } from 'react-icons/fi';
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
@@ -26,6 +26,21 @@ const SettingsPage = () => {
   });
   const [theme, setTheme] = useState('light');
   const navigate = useNavigate();
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const dropdownRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -71,7 +86,7 @@ const SettingsPage = () => {
         ...formData,
         settings: { theme }
       });
-      
+
       setUser(updatedUser);
       setFormData({
         ...formData,
@@ -94,10 +109,10 @@ const SettingsPage = () => {
   const handleFileUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
-  
+
     const formData = new FormData();
     formData.append('file', file);
-  
+
     try {
       setLoading(true);
       const response = await settingsAPI.uploadProfilePicture(formData);
@@ -119,14 +134,14 @@ const SettingsPage = () => {
       <nav className="sidebar">
         <ul className="sidebar-menu">
           {[
-            { icon: <FiLayout />, name: 'Dashboard', id: 'dashboard'},
+            { icon: <FiLayout />, name: 'Dashboard', id: 'dashboard' },
             { icon: <FiFolder />, name: 'Projects', id: 'projects', path: '/projects' },
             { icon: <FiCheckSquare />, name: 'My Tasks', id: 'mytasks', path: '/mytasks' },
             { icon: <FiCalendar />, name: 'Calendar', id: 'calendar' },
-            { icon: <FiMessageSquare />, name: 'Conversation', id: 'conversation'},
+            { icon: <FiMessageSquare />, name: 'Conversation', id: 'conversation' },
             { icon: <FiSettings />, name: 'Settings', id: 'settings', path: '/settings' }
           ].map((item) => (
-            <li 
+            <li
               key={item.id}
               className={`sidebar-item ${window.location.pathname === item.path ? 'active' : ''}`}
               onClick={() => {
@@ -140,34 +155,53 @@ const SettingsPage = () => {
           ))}
         </ul>
       </nav>
-      
+
       <div className="settings-content">
         <header className="top-nav">
+          {/* TaskFlow logo on the left */}
           <div className="nav-brand">
             <h1>TaskFlow</h1>
           </div>
-          <div className="user-display">
+
+          {/* User profile on the right */}
+          <div
+            className={`user-profile-container ${isDropdownOpen ? 'active' : ''}`}
+            onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+            ref={dropdownRef}
+          >
+            {user.profileImage ? (
+              <img
+                src={user.profileImage}
+                alt="Profile"
+                className="user-avatar"
+              />
+            ) : (
+              <div className="user-avatar">
+                {user.name.charAt(0).toUpperCase()}
+              </div>
+            )}
             <span className="user-name">{user.name}</span>
-            <button 
-              className="logout-btn"
-              onClick={() => {
-                localStorage.removeItem('token');
-                window.location.href = '/';
-              }}
-            >
-              Logout
-            </button>
+            <div className="user-dropdown">
+              <button
+                className="logout-btn"
+                onClick={() => {
+                  localStorage.removeItem('token');
+                  window.location.href = '/';
+                }}
+              >
+                <FiLogOut /> Logout
+              </button>
+            </div>
           </div>
         </header>
-
         {error && <div className="error-message">{error}</div>}
 
         <div className="profile-section">
           <div className="profile-image-container">
             {formData.profileImage ? (
-              <img 
-                src={formData.profileImage} 
-                alt="Profile" 
+              <img
+                src={formData.profileImage}
+                alt="Profile"
                 className="profile-image"
               />
             ) : (
@@ -177,8 +211,8 @@ const SettingsPage = () => {
             )}
             <label className="upload-button">
               Change Photo
-              <input 
-                type="file" 
+              <input
+                type="file"
                 onChange={handleFileUpload}
                 accept="image/*"
                 style={{ display: 'none' }}

@@ -1,4 +1,4 @@
-require('dotenv').config(); 
+require('dotenv').config();
 
 const User = require('../models/User');
 const jwt = require('jsonwebtoken');
@@ -107,7 +107,7 @@ const register = async (req, res) => {
 const login = async (req, res) => {
     try {
         const { email, password } = req.body; // Changed from passwordHash to password
-        
+
         const user = await User.findOne({ email });
         if (!user) {
             return res.status(401).json({ error: 'Invalid credentials' });
@@ -249,7 +249,7 @@ const deleteUser = async (req, res) => {
 // Create board
 const createBoard = async (req, res) => {
     try {
-        const { name, memberEmails,description } = req.body;
+        const { name, memberEmails, description } = req.body;
         const owner = req.user;
 
         if (!owner) {
@@ -308,7 +308,7 @@ const createBoard = async (req, res) => {
 };
 
 // Get boards
-const myBoards =  async (req, res) => {
+const myBoards = async (req, res) => {
     try {
         const user = req.user;
 
@@ -331,7 +331,7 @@ const myBoards =  async (req, res) => {
 
 
 // get single board
-const board =  async (req, res) => {
+const board = async (req, res) => {
     try {
         const board = await Board.findOne({ _id: req.params.boardId, user: req.user.userId });
 
@@ -359,9 +359,9 @@ const updateBoard = async (req, res) => {
         }).populate('members', '_id email');
 
         if (!board) {
-            return res.status(404).json({ 
+            return res.status(404).json({
                 success: false,
-                message: 'Board not found or not authorized' 
+                message: 'Board not found or not authorized'
             });
         }
 
@@ -380,13 +380,13 @@ const updateBoard = async (req, res) => {
         if (addMembers.length > 0) {
             const usersToAdd = await User.find({ email: { $in: addMembers } });
             const userIdsToAdd = usersToAdd.map(user => user._id);
-            
+
             // Filter out duplicates
             const existingMemberIds = board.members.map(m => m._id.toString());
             const newMembers = userIdsToAdd.filter(
                 id => !existingMemberIds.includes(id.toString())
             );
-            
+
             board.members = [...board.members, ...newMembers];
             console.log(`Added ${newMembers.length} new members`);
         }
@@ -394,30 +394,30 @@ const updateBoard = async (req, res) => {
         // 5. Handle member removals (fixed implementation)
         if (removeMembers.length > 0) {
             const usersToRemove = await User.find({ email: { $in: removeMembers } });
-            
+
             // Validate all requested members exist
             const foundEmails = usersToRemove.map(u => u.email);
             const missingEmails = removeMembers.filter(e => !foundEmails.includes(e));
-            
+
             if (missingEmails.length > 0) {
                 console.warn('Some members not found:', missingEmails);
             }
 
             const userIdsToRemove = usersToRemove.map(u => u._id.toString());
-            
+
             // Proper ID comparison
             const initialCount = board.members.length;
-            board.members = board.members.filter(member => 
+            board.members = board.members.filter(member =>
                 !userIdsToRemove.includes(member._id.toString())
             );
-            
+
             const removedCount = initialCount - board.members.length;
             console.log(`Removed ${removedCount} members`);
         }
 
         // 6. Save changes
         const updatedBoard = await board.save();
-        
+
         // 7. Send notifications for newly added members
         if (addMembers.length > 0) {
             const newUsers = await User.find({ email: { $in: addMembers } });
@@ -503,17 +503,17 @@ const createTicket = async (req, res) => {
         let assignedUserIds = [];
         if (assignedToEmails && assignedToEmails.length > 0) {
             // Find users by exact email match
-            const assignedUsers = await User.find({ 
-                email: { $in: assignedToEmails } 
+            const assignedUsers = await User.find({
+                email: { $in: assignedToEmails }
             });
 
             // Check if all emails were found
             if (assignedUsers.length !== assignedToEmails.length) {
                 const foundEmails = assignedUsers.map(user => user.email);
-                const missingEmails = assignedToEmails.filter(email => 
+                const missingEmails = assignedToEmails.filter(email =>
                     !foundEmails.includes(email)
                 );
-                return res.status(400).json({ 
+                return res.status(400).json({
                     message: "Some assigned users not found in database.",
                     missingEmails
                 });
@@ -584,7 +584,7 @@ const createTicket = async (req, res) => {
 
     } catch (error) {
         console.error("Error creating ticket:", error);
-        res.status(500).json({ 
+        res.status(500).json({
             message: "Error creating ticket.",
             error: error.message,
             stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
@@ -727,8 +727,8 @@ const updateTicket = async (req, res) => {
         if (updates.assignedToEmails?.length > 0) {
 
             console.log('Processing assigned emails:', updates.assignedToEmails);
-            const assignedUsers = await User.find({ 
-                email: { $in: updates.assignedToEmails } 
+            const assignedUsers = await User.find({
+                email: { $in: updates.assignedToEmails }
             });
 
             console.log('Found users:', assignedUsers.map(u => u.email));
@@ -739,7 +739,7 @@ const updateTicket = async (req, res) => {
                 const missingEmails = updates.assignedToEmails.filter(
                     email => !foundEmails.includes(email)
                 );
-                return res.status(400).json({ 
+                return res.status(400).json({
                     error: "Some users not found",
                     missingEmails
                 });
@@ -749,7 +749,7 @@ const updateTicket = async (req, res) => {
             const invalidUsers = assignedUsers.filter(user =>
                 !board.members.includes(user._id) && !board.owner.equals(user._id)
             );
-            
+
             if (invalidUsers.length > 0) {
                 return res.status(403).json({
                     error: "Users not in board",
@@ -823,7 +823,7 @@ const updateTicket = async (req, res) => {
             stack: error.stack,
             body: req.body
         });
-        res.status(500).json({ 
+        res.status(500).json({
             error: "Internal server error",
             details: process.env.NODE_ENV === 'development' ? error.message : undefined
         });
@@ -1183,7 +1183,7 @@ const generateTicketsFromPrompt = async (req, res) => {
         res.status(500).json({ message: "Internal server error during AI task generation." });
     }
 };
-  
+
 
 
 // Add comment
@@ -1261,10 +1261,10 @@ const getCommentsForTicket = async (req, res) => {
         const { ticketId } = req.params;
 
         const comments = await Comment.find({ ticketId })
-            .populate({ 
-                path: 'userId', 
-                select: 'name email', 
-                model: 'User' 
+            .populate({
+                path: 'userId',
+                select: 'name email',
+                model: 'User'
             })
             .sort({ createdAt: -1 });
 
@@ -1425,12 +1425,14 @@ const getUserCalendarEvents = async (req, res) => {
 
 
 
-module.exports = {setSocketInstance, register, login,createBoard,
-    myBoards,deleteBoard,createTicket,getTickets,deleteTicket,
-board, updateBoard,getSingleTicket,getMyTickets, updateTicket,assignUserToTicket,
-removeUserFromTicket,getUserProfile, updateUserProfile, deleteUser,
-getNotifications,createNotification,markNotificationRead, deleteNotification,
-generateTicketsFromPrompt, getUserBasicInfoById, addComment,
-getCommentsForTicket,deleteComment,getTicketAssignees,generateDailyStandup,
-getMyTicketsForBoard, uploadPicture, getUserCalendarEvents, changePassword};
+module.exports = {
+    setSocketInstance, register, login, createBoard,
+    myBoards, deleteBoard, createTicket, getTickets, deleteTicket,
+    board, updateBoard, getSingleTicket, getMyTickets, updateTicket, assignUserToTicket,
+    removeUserFromTicket, getUserProfile, updateUserProfile, deleteUser,
+    getNotifications, createNotification, markNotificationRead, deleteNotification,
+    generateTicketsFromPrompt, getUserBasicInfoById, addComment,
+    getCommentsForTicket, deleteComment, getTicketAssignees, generateDailyStandup,
+    getMyTicketsForBoard, uploadPicture, getUserCalendarEvents, changePassword
+};
 

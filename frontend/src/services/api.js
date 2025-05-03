@@ -1,9 +1,9 @@
 import axios from 'axios';
 
 const API = axios.create({
-  baseURL: process.env.NODE_ENV === 'development' 
-    ? 'http://localhost:5001/api' 
-    : '/api', 
+  baseURL: process.env.NODE_ENV === 'development'
+    ? 'http://localhost:5001/api'
+    : '/api',
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json',
@@ -50,7 +50,7 @@ export const authAPI = {
 
   getUserProfile: async () => {
     const response = await API.get('/auth/user-profile');
-    return response.data; 
+    return response.data;
   },
 
   getMembers: async (boardId) => {
@@ -74,7 +74,7 @@ export const authAPI = {
   },
 
 };
-  
+
 export const boardAPI = {
   create: async (boardData) => {
     const { data } = await API.post('/auth/create-board', boardData);
@@ -105,7 +105,7 @@ export const boardAPI = {
   removeMembers: async (boardId, emails) => {
     try {
       const { data } = await API.put(`/auth/${boardId}`, {
-        removeMembers: emails 
+        removeMembers: emails
       });
       return data;
     } catch (error) {
@@ -148,12 +148,12 @@ export const taskAPI = {
         deadline: taskData.deadline || null,
         assignedToEmails: taskData.assignedToEmails
       };
-      
+
       console.log(payload);
       const { data } = await API.post('/auth/create-ticket', payload);
       return data;
-      
-      
+
+
     } catch (error) {
       console.error('Create Ticket Error:', {
         request: error.config?.data,
@@ -161,7 +161,7 @@ export const taskAPI = {
       });
       throw error;
     }
-    
+
   },
 
   updateTicket: async (id, data) => {
@@ -192,7 +192,7 @@ export const taskAPI = {
     }
   },
 
-  getTicketAssignees:async (ticketId) => {
+  getTicketAssignees: async (ticketId) => {
     try {
       const { data } = await API.get(`/auth/tickets/${ticketId}/assignees`);
       return data;

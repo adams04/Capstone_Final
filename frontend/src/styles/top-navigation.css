@@ -1,80 +1,145 @@
-/* In top-navigation.css */
-html, body {
-    margin: 0;
-    padding: 0;
-    height: 100%;
-  }
+/* top-navigation.css */
+html,
+body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+}
 
 .top-nav {
-    background: #252927;
-    height: 80px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 0 2rem;
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    z-index: 100;
-    border-bottom: 1px solid #333;
-  }
-  .nav-brand h1 {
-    color: #B50D8A;
-    font-size: 1.5rem;
-    margin: 0;
-  }
+  background: #252927;
+  height: 80px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 2rem;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  border-bottom: 1px solid #333;
+}
 
-  .sidebar-header {
-    font-size: 1.5rem;
-    font-weight: 700;
-    color: #B50D8A;
-    padding-left: 1rem;
-  }
-  
-  .nav-actions {
-    display: flex;
-    align-items: center;
-    gap: 2rem;
-  }
-  
-  .user-info {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-  }
+.nav-brand h1,
+.sidebar-header {
+  color: #B50D8A;
+  font-size: 1.5rem;
+  margin: 0;
+}
 
-  .user-display {
-    display: flex;
-    align-items: center;
-  }
-  
-  .user-name {
-    font-weight: 500;
-  }
-  
-  .sidebar {
-    top: 80px; /* Start below the top nav */
-    height: calc(100vh - 80px);
-  }
+.sidebar-header {
+  font-weight: 700;
+  padding-left: 1rem;
+}
 
-  /* Add to top-navigation.css */
+.nav-actions,
+.user-info,
+.user-display,
+.user-profile,
+.user-profile-container {
+  display: flex;
+  align-items: center;
+}
+
+.nav-actions {
+  gap: 2rem;
+}
+
+.user-info {
+  gap: 1rem;
+}
+
+.user-display,
+.user-profile,
+.user-profile-container {
+  gap: 10px;
+}
+
+.user-profile,
+.user-profile-container {
+  position: relative;
+  cursor: pointer;
+}
+
+.sidebar {
+  top: 80px;
+  height: calc(100vh - 80px);
+}
+
+.user-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 2px solid #B50D8A;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #4E01FD 0%, #E81352 100%);
+  color: white;
+  font-weight: bold;
+}
+
+.user-avatar img {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.user-name {
+  color: white;
+  font-weight: 500;
+}
+
+.user-dropdown {
+  position: absolute;
+  top: 50px;
+  right: 0;
+  background: #252927;
+  border: 1px solid #333;
+  border-radius: 8px;
+  padding: 10px;
+  width: 150px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  z-index: 100;
+  display: none;
+}
+
+.user-profile:hover .user-dropdown,
+.user-profile-container.active .user-dropdown {
+  display: block;
+}
+
 .logout-btn {
   background: transparent;
-  color: #B50D8A;
-  border-radius: 4px;
-  padding: 8px 16px;
-  margin-left: 1rem;
+  color: #B9B9B9;
+  border: none;
+  padding: 8px 12px;
+  width: 100%;
+  text-align: left;
   cursor: pointer;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
   transition: all 0.3s ease;
   font-weight: 500;
-  border: none;
-  font-size: 1rem; 
-  border-radius: 25px;
 }
 
 .logout-btn:hover {
+  background: rgba(232, 19, 82, 0.1);
+  color: #E81352;
+}
+
+/* Specific logout button in nav */
+.nav-actions .logout-btn {
+  color: #B50D8A;
+  margin-left: 1rem;
+  border-radius: 25px;
+}
+
+.nav-actions .logout-btn:hover {
   background: linear-gradient(90deg, #4E01FD 0%, #E81352 100%);
   color: #fff;
-  border-radius: 25px;
 }

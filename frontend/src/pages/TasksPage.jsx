@@ -1,18 +1,18 @@
-import React, {useState, useEffect} from 'react';
-import {useParams, useNavigate} from 'react-router-dom';
+import { useEffect, useRef, useState } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import {
     FiLayout, FiFolder, FiCheckSquare, FiCalendar,
     FiMessageSquare, FiSettings, FiPlus, FiTrash2,
-    FiEdit2, FiUsers, FiUserPlus
+    FiEdit2, FiUsers, FiLogOut
 } from 'react-icons/fi';
-import {authAPI, taskAPI, boardAPI} from '../services/api';
+import { authAPI, taskAPI, boardAPI } from '../services/api';
 import AIChatBot from './AIChatBot';
 import '../styles/sidebar.css';
 import '../styles/top-navigation.css';
 import '../styles/tasks.css';
 
 const TasksPage = () => {
-    const {boardId} = useParams();
+    const { boardId } = useParams();
     const navigate = useNavigate();
 
     // State management
@@ -40,6 +40,21 @@ const TasksPage = () => {
     const [showMembersModal, setShowMembersModal] = useState(false);
     const [showAddMemberModal, setShowAddMemberModal] = useState(false);
     const [showCommentsModal, setShowCommentsModal] = useState(false);
+    const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+    const dropdownRef = useRef(null);
+
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+                setIsDropdownOpen(false);
+            }
+        };
+
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, []);
 
     // Form states
     const [newTask, setNewTask] = useState({
@@ -62,15 +77,15 @@ const TasksPage = () => {
 
     const [messages, setMessages] = useState({
         tasks: [
-            {text: "Hello! I'm your AI Task Generator. Describe the project you need done.", sender: 'bot'}
+            { text: "Hello! I'm your AI Task Generator. Describe the project you need done.", sender: 'bot' }
         ],
         standup: [
-            {text: "Hi! I'm your Standup Generator. I'll help you summarize your daily progress.", sender: 'bot'}
+            { text: "Hi! I'm your Standup Generator. I'll help you summarize your daily progress.", sender: 'bot' }
         ]
     });
 
     const generateTasksFromPrompt = (prompt) => {
-        taskAPI.generateTicketsFromPrompt(boardId, {description: prompt})
+        taskAPI.generateTicketsFromPrompt(boardId, { description: prompt })
             .then(() => {
                 setTimeout(() => {
                     fetchTasks();
@@ -86,7 +101,7 @@ const TasksPage = () => {
         setMessages(prev => ({
             ...prev,
             standup: [...prev.standup,
-                {text: "Generating your standup summary...", sender: 'bot'}
+            { text: "Generating your standup summary...", sender: 'bot' }
             ]
         }));
 
@@ -102,7 +117,7 @@ const TasksPage = () => {
                     return {
                         ...prev,
                         standup: [...updatedStandup,
-                            {text: response.standup, sender: 'bot'}
+                        { text: response.standup, sender: 'bot' }
                         ]
                     };
                 });
@@ -117,7 +132,7 @@ const TasksPage = () => {
                     return {
                         ...prev,
                         standup: [...updatedStandup,
-                            {text: "Sorry, I couldn't generate the standup. Please try again later.", sender: 'bot'}
+                        { text: "Sorry, I couldn't generate the standup. Please try again later.", sender: 'bot' }
                         ]
                     };
                 });
@@ -334,7 +349,7 @@ const TasksPage = () => {
             setNewMemberEmail('');
 
             // Make the API call
-            await taskAPI.assignUserToTicket(selectedTask._id, {email: newMemberEmail});
+            await taskAPI.assignUserToTicket(selectedTask._id, { email: newMemberEmail });
 
             // Refresh the data from server to get complete member info
             const response = await taskAPI.getTicketAssignees(selectedTask._id);
@@ -365,7 +380,7 @@ const TasksPage = () => {
             // Make API calls to remove members
             await Promise.all(
                 selectedMembers.map(email =>
-                    taskAPI.removeUserFromTicket(selectedTask._id, {email})
+                    taskAPI.removeUserFromTicket(selectedTask._id, { email })
                 )
             );
 
@@ -539,7 +554,7 @@ const TasksPage = () => {
         } catch (err) {
             setError('Failed to update task status');
             setTasks(prev => prev.map(task =>
-                task._id === draggingTask._id ? {...task, status: draggingTask.status} : task
+                task._id === draggingTask._id ? { ...task, status: draggingTask.status } : task
             ));
         } finally {
             setDraggingTask(null);
@@ -557,60 +572,77 @@ const TasksPage = () => {
     }, {});
 
     const columns = [
-        {id: 'To Do', title: 'To Do', canAdd: true},
-        {id: 'In Progress', title: 'In Progress', canAdd: false},
-        {id: 'Done', title: 'Done', canAdd: false}
+        { id: 'To Do', title: 'To Do', canAdd: true },
+        { id: 'In Progress', title: 'In Progress', canAdd: false },
+        { id: 'Done', title: 'Done', canAdd: false }
     ];
 
     if (loading) return <div className="loading">Loading...</div>;
     if (!user) return <div className="error">Failed to load user information</div>;
 
-  return (
-    <div className="app-container">
-      {/* Sidebar Navigation */}
+    return (
+        <div className="app-container">
+            {/* Sidebar Navigation */}
 
-        <nav className="sidebar">
-        <ul className="sidebar-menu">
-            {[
-            { icon: <FiLayout />, name: 'Dashboard', id: 'dashboard', path: '/' },
-            { icon: <FiFolder />, name: 'Projects', id: 'projects', path: '/projects', active: true }, 
-            { icon: <FiCheckSquare />, name: 'My Tasks', id: 'mytasks', path: '/mytasks' },
-            { icon: <FiCalendar />, name: 'Calendar', id: 'calendar'},
-            { icon: <FiMessageSquare />, name: 'Conversation', id: 'conversation' },
-            { icon: <FiSettings />, name: 'Settings', id: 'settings', path: '/settings' }
-            ].map((item) => (
-            <li 
-                key={item.id}
-                className={`sidebar-item ${item.active ? 'active' : ''}`}
-                onClick={() => navigate(item.path)}
-            >
-                <span className="sidebar-icon">{item.icon}</span>
-                {item.name}
-            </li>
-            ))}
-        </ul>
-        </nav>
-  
-      {/* Main Content Area */}
-      <div className="content-area">
-      // In BoardPage.jsx, update the top-nav section:
-        <header className="top-nav">
-        <div className="nav-brand">
-            <h1>TaskFlow</h1>
-        </div>
-        <div className="user-display">
-            <span className="user-name">{user.name}</span>
-            <button 
-            className="logout-btn"
-            onClick={() => {
-                localStorage.removeItem('token');
-                window.location.href = '/';
-            }}
-            >
-            Logout
-            </button>
-        </div>
-        </header>
+            <nav className="sidebar">
+                <ul className="sidebar-menu">
+                    {[
+                        { icon: <FiLayout />, name: 'Dashboard', id: 'dashboard', path: '/' },
+                        { icon: <FiFolder />, name: 'Projects', id: 'projects', path: '/projects', active: true },
+                        { icon: <FiCheckSquare />, name: 'My Tasks', id: 'mytasks', path: '/mytasks' },
+                        { icon: <FiCalendar />, name: 'Calendar', id: 'calendar' },
+                        { icon: <FiMessageSquare />, name: 'Conversation', id: 'conversation' },
+                        { icon: <FiSettings />, name: 'Settings', id: 'settings', path: '/settings' }
+                    ].map((item) => (
+                        <li
+                            key={item.id}
+                            className={`sidebar-item ${item.active ? 'active' : ''}`}
+                            onClick={() => navigate(item.path)}
+                        >
+                            <span className="sidebar-icon">{item.icon}</span>
+                            {item.name}
+                        </li>
+                    ))}
+                </ul>
+            </nav>
+            <div className="content-area">
+                <header className="top-nav">
+                    {/* TaskFlow logo on the left */}
+                    <div className="nav-brand">
+                        <h1>TaskFlow</h1>
+                    </div>
+
+                    {/* User profile on the right */}
+                    <div
+                        className={`user-profile-container ${isDropdownOpen ? 'active' : ''}`}
+                        onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                        ref={dropdownRef}
+                    >
+                        {user.profileImage ? (
+                            <img
+                                src={user.profileImage}
+                                alt="Profile"
+                                className="user-avatar"
+                            />
+                        ) : (
+                            <div className="user-avatar">
+                                {user.name.charAt(0).toUpperCase()}
+                            </div>
+                        )}
+                        <span className="user-name">{user.name}</span>
+                        <div className="user-dropdown">
+                            <button
+                                className="logout-btn"
+                                onClick={() => {
+                                    localStorage.removeItem('token');
+                                    window.location.href = '/';
+                                }}
+                            >
+                                <FiLogOut /> Logout
+                            </button>
+                        </div>
+                    </div>
+                </header>
 
                 <div className="board-header">
                     <div className="board-title-container">
@@ -620,7 +652,7 @@ const TasksPage = () => {
                         className="add-task-button"
                         onClick={() => setShowCreateModal(true)}
                     >
-                        <FiPlus/> Add task
+                        <FiPlus /> Add task
                     </button>
                 </div>
 
@@ -629,9 +661,8 @@ const TasksPage = () => {
                         {columns.map(column => (
                             <div
                                 key={column.id}
-                                className={`column ${draggedOverColumn === column.id ? 'drop-target' : ''} ${
-                                    column.id === 'Done' ? 'done-column' : ''
-                                }`}
+                                className={`column ${draggedOverColumn === column.id ? 'drop-target' : ''} ${column.id === 'Done' ? 'done-column' : ''
+                                    }`}
                                 onDragOver={(e) => handleDragOver(e, column.id)}
                                 onDragLeave={() => setDraggedOverColumn(null)}
                                 onDrop={(e) => handleDrop(e, column.id)}
@@ -643,9 +674,8 @@ const TasksPage = () => {
                                 {(groupedTasks[column.id] || []).map(task => (
                                     <div
                                         key={task._id}
-                                        className={`task-card ${task.priority?.toLowerCase()}-priority ${
-                                            draggingTask?._id === task._id ? 'dragging' : ''
-                                        } ${task.status === 'Done' ? 'done' : ''}`}
+                                        className={`task-card ${task.priority?.toLowerCase()}-priority ${draggingTask?._id === task._id ? 'dragging' : ''
+                                            } ${task.status === 'Done' ? 'done' : ''}`}
                                         draggable
                                         onDragStart={(e) => handleDragStart(e, task)}
                                         onDragEnd={handleDragEnd}
@@ -664,21 +694,21 @@ const TasksPage = () => {
                                                 });
                                                 setShowEditModal(true);
                                             }}>
-                                                <FiEdit2/>
+                                                <FiEdit2 />
                                             </button>
                                             <button onClick={(e) => {
                                                 e.stopPropagation();
                                                 setSelectedTask(task);
                                                 setShowDeleteModal(true);
                                             }}>
-                                                <FiTrash2/>
+                                                <FiTrash2 />
                                             </button>
                                             <button onClick={(e) => {
                                                 e.stopPropagation();
                                                 setSelectedTask(task);
                                                 setShowMembersModal(true);
                                             }}>
-                                                <FiUsers/>
+                                                <FiUsers />
                                             </button>
                                             <button onClick={async (e) => {
                                                 e.stopPropagation();
@@ -686,15 +716,15 @@ const TasksPage = () => {
                                                 await fetchComments(task._id);
                                                 setShowCommentsModal(true);
                                             }}>
-                                                <FiMessageSquare/>
+                                                <FiMessageSquare />
                                             </button>
                                         </div>
                                         <h4 className="task-title">{task.title}</h4>
                                         <p className="task-description">{task.description}</p>
                                         <div className="task-footer">
-                      <span className="task-deadline">
-                        {task.deadline ? `Due: ${new Date(task.deadline).toLocaleDateString()}` : 'No deadline'}
-                      </span>
+                                            <span className="task-deadline">
+                                                {task.deadline ? `Due: ${new Date(task.deadline).toLocaleDateString()}` : 'No deadline'}
+                                            </span>
                                         </div>
                                     </div>
                                 ))}
@@ -715,7 +745,7 @@ const TasksPage = () => {
                             placeholder="Enter a name"
                             className="modal-input"
                             value={newTask.title}
-                            onChange={(e) => setNewTask({...newTask, title: e.target.value})}
+                            onChange={(e) => setNewTask({ ...newTask, title: e.target.value })}
                             autoFocus
                         />
                         <textarea
@@ -723,14 +753,14 @@ const TasksPage = () => {
                             className="modal-input"
                             rows="4"
                             value={newTask.description}
-                            onChange={(e) => setNewTask({...newTask, description: e.target.value})}
+                            onChange={(e) => setNewTask({ ...newTask, description: e.target.value })}
                         />
                         <input
                             type="date"
                             placeholder="yyyy-mm-dd"
                             className="modal-input"
                             value={newTask.deadline}
-                            onChange={(e) => setNewTask({...newTask, deadline: e.target.value})}
+                            onChange={(e) => setNewTask({ ...newTask, deadline: e.target.value })}
                         />
 
                         <div className="email-input-container">
@@ -767,7 +797,7 @@ const TasksPage = () => {
                                     <button
                                         key={level}
                                         className={`priority-option ${newTask.priority === level ? 'active' : ''} ${level}-priority`}
-                                        onClick={() => setNewTask({...newTask, priority: level})}
+                                        onClick={() => setNewTask({ ...newTask, priority: level })}
                                         type="button"
                                     >
                                         {level.charAt(0).toUpperCase() + level.slice(1)}
@@ -823,12 +853,12 @@ const TasksPage = () => {
                                 comments.map(comment => (
                                     <div key={comment._id} className="comment-item">
                                         <div className="comment-header">
-                      <span className="comment-author">
-                        {comment.user?.name || 'Unknown user'}
-                      </span>
+                                            <span className="comment-author">
+                                                {comment.user?.name || 'Unknown user'}
+                                            </span>
                                             <span className="comment-date">
-                        {new Date(comment.createdAt).toLocaleString()}
-                      </span>
+                                                {new Date(comment.createdAt).toLocaleString()}
+                                            </span>
                                             {comment.user?.id === user.id && (
                                                 <button
                                                     className="delete-comment-btn"
@@ -858,13 +888,13 @@ const TasksPage = () => {
                         </div>
 
                         <div className="add-comment-section">
-              <textarea
-                  placeholder="Add a comment..."
-                  className="comment-input"
-                  value={newComment}
-                  onChange={(e) => setNewComment(e.target.value)}
-                  disabled={loading}
-              />
+                            <textarea
+                                placeholder="Add a comment..."
+                                className="comment-input"
+                                value={newComment}
+                                onChange={(e) => setNewComment(e.target.value)}
+                                disabled={loading}
+                            />
                             <div className="comment-actions">
                                 <div className="file-upload">
                                     <label>
@@ -877,14 +907,14 @@ const TasksPage = () => {
                                     </label>
                                     {commentFile && (
                                         <span className="file-name">
-                      {commentFile.name}
+                                            {commentFile.name}
                                             <button
                                                 onClick={() => setCommentFile(null)}
                                                 className="remove-file-btn"
                                             >
-                        ×
-                      </button>
-                    </span>
+                                                ×
+                                            </button>
+                                        </span>
                                     )}
                                 </div>
                                 <button
@@ -911,7 +941,7 @@ const TasksPage = () => {
                             placeholder="Task title"
                             className="modal-input"
                             value={editTask.title}
-                            onChange={(e) => setEditTask({...editTask, title: e.target.value})}
+                            onChange={(e) => setEditTask({ ...editTask, title: e.target.value })}
                             autoFocus
                         />
                         <textarea
@@ -919,14 +949,14 @@ const TasksPage = () => {
                             className="modal-input"
                             rows="4"
                             value={editTask.description}
-                            onChange={(e) => setEditTask({...editTask, description: e.target.value})}
+                            onChange={(e) => setEditTask({ ...editTask, description: e.target.value })}
                         />
                         <input
                             type="date"
                             placeholder="Deadline"
                             className="modal-input"
                             value={editTask.deadline}
-                            onChange={(e) => setEditTask({...editTask, deadline: e.target.value})}
+                            onChange={(e) => setEditTask({ ...editTask, deadline: e.target.value })}
                         />
 
                         <div className="priority-select">
@@ -936,7 +966,7 @@ const TasksPage = () => {
                                     <button
                                         key={level}
                                         className={`priority-option ${editTask.priority === level ? 'active' : ''} ${level}-priority`}
-                                        onClick={() => setEditTask({...editTask, priority: level})}
+                                        onClick={() => setEditTask({ ...editTask, priority: level })}
                                         type="button"
                                     >
                                         {level.charAt(0).toUpperCase() + level.slice(1)}
@@ -1011,7 +1041,7 @@ const TasksPage = () => {
                             onChange={(e) => setSearchTerm(e.target.value)}
                         />
 
-                        <div style={{display: 'flex', justifyContent: 'flex-end', marginBottom: '15px'}}>
+                        <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '15px' }}>
                             <button
                                 className="add-member-task-btn"
                                 onClick={() => setShowAddMemberModal(true)}
@@ -1056,12 +1086,12 @@ const TasksPage = () => {
                                                     }}
                                                 />
                                                 <div className="member-task-details">
-                          <span className="member-task-name">
-                            {displayName}
-                          </span>
+                                                    <span className="member-task-name">
+                                                        {displayName}
+                                                    </span>
                                                     <span className="member-task-email">
-                            {displayEmail}
-                          </span>
+                                                        {displayEmail}
+                                                    </span>
                                                 </div>
                                             </div>
                                         );

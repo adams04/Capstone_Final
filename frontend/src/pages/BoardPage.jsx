@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { 
-  FiLayout, FiFolder, FiCheckSquare, FiCalendar, 
-  FiMessageSquare, FiSettings, FiPlus, FiTrash2, 
-  FiEdit2, FiUsers, FiChevronDown, FiUserPlus 
+import {
+  FiLayout, FiFolder, FiCheckSquare, FiCalendar,
+  FiMessageSquare, FiSettings, FiTrash2,
+  FiEdit2, FiUsers, FiChevronDown, FiLogOut
 } from 'react-icons/fi';
 import { authAPI, boardAPI, taskAPI } from '../services/api';
 import '../styles/sidebar.css';
@@ -31,12 +31,27 @@ const ProjectsPage = () => {
   const [editProjectName, setEditProjectName] = useState('');
   const [newMemberEmail, setNewMemberEmail] = useState('');
   const [projectToDelete, setProjectToDelete] = useState(null);
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const dropdownRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   useEffect(() => {
     const fetchInitialData = async () => {
       const token = localStorage.getItem('token');
       if (!token) return window.location.href = '/login';
-      
+
       try {
         const userData = await authAPI.getUserProfile();
         if (!userData?.name) throw new Error('Invalid user data');
@@ -92,7 +107,7 @@ const ProjectsPage = () => {
     try {
       setLoading(true);
       const membersData = [];
-      
+
       for (let memberId of memberIds) {
         try {
           const memberData = await authAPI.getUserBasicInfoById(memberId);
@@ -111,7 +126,7 @@ const ProjectsPage = () => {
           });
         }
       }
-      
+
       setMembers(membersData);
     } catch {
       setError('Failed to load members');
@@ -122,21 +137,21 @@ const ProjectsPage = () => {
 
   const createProject = async () => {
     if (!newProjectName.trim()) return;
-    
+
     setLoading(true);
     try {
-      const newProject = await boardAPI.create({ 
-        name: newProjectName, 
-        memberEmails: [] 
+      const newProject = await boardAPI.create({
+        name: newProjectName,
+        memberEmails: []
       });
-      
+
       setProjects(prev => [...prev, {
         ...newProject,
         name: newProjectName,
         tasksDone: 0,
         totalTasks: 0
       }]);
-      
+
       setNewProjectName('');
       setShowCreateModal(false);
       setError('');
@@ -152,10 +167,10 @@ const ProjectsPage = () => {
     setLoading(true);
     try {
       await boardAPI.updateBoard(selectedProject._id, { name: editProjectName });
-      setProjects(projects.map(project => 
-        project._id === selectedProject._id ? 
-        { ...project, name: editProjectName } : 
-        project
+      setProjects(projects.map(project =>
+        project._id === selectedProject._id ?
+          { ...project, name: editProjectName } :
+          project
       ));
       setShowEditModal(false);
       setSelectedProject(null);
@@ -184,11 +199,11 @@ const ProjectsPage = () => {
 
   const addMemberToProject = async () => {
     if (!newMemberEmail.trim() || !selectedProject) return;
-    
+
     setLoading(true);
     try {
-      await boardAPI.updateBoard(selectedProject._id, { 
-        addMembers: [newMemberEmail] 
+      await boardAPI.updateBoard(selectedProject._id, {
+        addMembers: [newMemberEmail]
       });
       await fetchProjects(user.email);
       setNewMemberEmail('');
@@ -204,7 +219,7 @@ const ProjectsPage = () => {
 
   const handleRemoveMembers = async () => {
     if (!selectedMembers.length || !selectedProject?._id) return;
-    
+
     setLoading(true);
     try {
       // First remove members from all tickets in the project
@@ -215,19 +230,19 @@ const ProjectsPage = () => {
             .catch(err => console.error(`Failed to remove user from ticket ${ticket._id}:`, err));
         }));
       });
-      
+
       await Promise.all(removePromises);
-      
+
       // Then remove members from the board
       await boardAPI.updateBoard(selectedProject._id, {
         removeMembers: selectedMembers
       });
-      
+
       // Refresh data
       const updatedProject = await boardAPI.getBoard(selectedProject._id);
       await fetchMemberData(updatedProject.members);
       await fetchProjects(user.email);
-      
+
       setSelectedMembers([]);
       setError('');
     } catch (error) {
@@ -251,8 +266,8 @@ const ProjectsPage = () => {
     setShowDeleteModal(true);
   };
 
-  const filteredProjects = activeFilter === 'all' 
-    ? projects 
+  const filteredProjects = activeFilter === 'all'
+    ? projects
     : projects.filter(p => p.type === activeFilter);
 
   if (loading && !projects.length) return <div className="loading">Loading...</div>;
@@ -260,49 +275,69 @@ const ProjectsPage = () => {
 
   return (
     <div className="app-container">
-           <nav className="sidebar">
-              <ul className="sidebar-menu">
-              {[
-                  { icon: <FiLayout />, name: 'Dashboard', id: 'dashboard' },
-                  { icon: <FiFolder />, name: 'Projects', id: 'projects', path: '/projects' },
-                  { icon: <FiCheckSquare />, name: 'My Tasks', id: 'mytasks', path: '/mytasks' },
-                  { icon: <FiCalendar />, name: 'Calendar', id: 'calendar' },
-                  { icon: <FiMessageSquare />, name: 'Conversation', id: 'conversation' },
-                  { icon: <FiSettings />, name: 'Settings', id: 'settings', path: '/settings' }
-              ].map((item) => (
-                  <li 
-                  key={item.id}
-                  className={`sidebar-item ${activeNav === item.id ? 'active' : ''}`}
-                  onClick={() => navigate(item.path)}
-                  >
-                  <span className="sidebar-icon">{item.icon}</span>
-                  {item.name}
-                  </li>
-              ))}
-              </ul>
-            </nav>
+      <nav className="sidebar">
+        <ul className="sidebar-menu">
+          {[
+            { icon: <FiLayout />, name: 'Dashboard', id: 'dashboard' },
+            { icon: <FiFolder />, name: 'Projects', id: 'projects', path: '/projects' },
+            { icon: <FiCheckSquare />, name: 'My Tasks', id: 'mytasks', path: '/mytasks' },
+            { icon: <FiCalendar />, name: 'Calendar', id: 'calendar' },
+            { icon: <FiMessageSquare />, name: 'Conversation', id: 'conversation' },
+            { icon: <FiSettings />, name: 'Settings', id: 'settings', path: '/settings' }
+          ].map((item) => (
+            <li
+              key={item.id}
+              className={`sidebar-item ${activeNav === item.id ? 'active' : ''}`}
+              onClick={() => navigate(item.path)}
+            >
+              <span className="sidebar-icon">{item.icon}</span>
+              {item.name}
+            </li>
+          ))}
+        </ul>
+      </nav>
       <div className="content-area">
         <header className="top-nav">
+          {/* TaskFlow logo on the left */}
           <div className="nav-brand">
             <h1>TaskFlow</h1>
           </div>
-          <div className="user-display">
+
+          {/* User profile on the right */}
+          <div
+            className={`user-profile-container ${isDropdownOpen ? 'active' : ''}`}
+            onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+            ref={dropdownRef}
+          >
+            {user.profileImage ? (
+              <img
+                src={user.profileImage}
+                alt="Profile"
+                className="user-avatar"
+              />
+            ) : (
+              <div className="user-avatar">
+                {user.name.charAt(0).toUpperCase()}
+              </div>
+            )}
             <span className="user-name">{user.name}</span>
-            <button 
-              className="logout-btn"
-              onClick={() => {
-                localStorage.removeItem('token');
-                window.location.href = '/';
-              }}
-            >
-              Logout
-            </button>
+            <div className="user-dropdown">
+              <button
+                className="logout-btn"
+                onClick={() => {
+                  localStorage.removeItem('token');
+                  window.location.href = '/';
+                }}
+              >
+                <FiLogOut /> Logout
+              </button>
+            </div>
           </div>
         </header>
-  
+
         <div className="projects-action-bar">
           <div className="action-buttons">
-            <button 
+            <button
               className="add-project-btn"
               onClick={() => setShowCreateModal(true)}
             >
@@ -325,18 +360,18 @@ const ProjectsPage = () => {
             </div>
           </div>
         </div>
-  
+
         <main className="main-content">
           {error && (
             <div className="error-message">
               {error} <button onClick={() => setError('')}>Close</button>
             </div>
           )}
-          
+
           <div className="projects-grid">
             {filteredProjects.map(project => (
-              <div 
-                key={project._id} 
+              <div
+                key={project._id}
                 className="project-card"
                 onClick={() => navigate(`/tasks/${project._id}`)}
               >
@@ -360,7 +395,7 @@ const ProjectsPage = () => {
                 </p>
                 <div className="project-footer">
                   <span>Tasks done: {project.tasksDone || 0}/{project.totalTasks || 0}</span>
-                  <button 
+                  <button
                     className="add-member-btn"
                     onClick={(e) => {
                       e.stopPropagation();
@@ -392,13 +427,13 @@ const ProjectsPage = () => {
               />
             </div>
             <div className="create-modal-actions">
-              <button 
+              <button
                 className="create-cancel-btn"
                 onClick={() => setShowCreateModal(false)}
               >
                 Cancel
               </button>
-              <button 
+              <button
                 className="create-submit-btn"
                 onClick={createProject}
                 disabled={!newProjectName.trim()}
@@ -425,13 +460,13 @@ const ProjectsPage = () => {
               />
             </div>
             <div className="edit-modal-actions">
-              <button 
+              <button
                 className="edit-cancel-btn"
                 onClick={() => setShowEditModal(false)}
               >
                 Cancel
               </button>
-              <button 
+              <button
                 className="edit-save-btn"
                 onClick={updateProject}
                 disabled={!editProjectName.trim()}
@@ -458,13 +493,13 @@ const ProjectsPage = () => {
               />
             </div>
             <div className="add-member-modal-actions">
-              <button 
+              <button
                 className="add-member-cancel-btn"
                 onClick={() => setShowAddMemberModal(false)}
               >
                 Cancel
               </button>
-              <button 
+              <button
                 className="add-member-submit-btn"
                 onClick={addMemberToProject}
                 disabled={!newMemberEmail.trim()}
@@ -482,7 +517,7 @@ const ProjectsPage = () => {
             <div className="members-modal-header">
               <h2>Project Members</h2>
             </div>
-            
+
             <input
               type="text"
               placeholder="Search by name or email"
@@ -490,16 +525,16 @@ const ProjectsPage = () => {
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
-            
+
             <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '15px' }}>
-              <button 
+              <button
                 className="add-member-btn"
                 onClick={() => setShowAddMemberModal(true)}
               >
                 Add member
               </button>
             </div>
-            
+
             {loading ? (
               <div className="loading-indicator">Loading members...</div>
             ) : error ? (
@@ -519,7 +554,7 @@ const ProjectsPage = () => {
                   .map((member) => {
                     const displayName = member?.name || 'No name';
                     const displayEmail = member?.email || 'No email';
-                    
+
                     return (
                       <div key={member?._id || displayEmail} className="member-item">
                         <input
@@ -528,7 +563,7 @@ const ProjectsPage = () => {
                           checked={selectedMembers.includes(displayEmail)}
                           onChange={() => {
                             if (!displayEmail || displayEmail === 'No email') return;
-                            setSelectedMembers(prev => 
+                            setSelectedMembers(prev =>
                               prev.includes(displayEmail)
                                 ? prev.filter(email => email !== displayEmail)
                                 : [...prev, displayEmail]
@@ -550,7 +585,7 @@ const ProjectsPage = () => {
             ) : (
               <p className="no-members">No members in this project.</p>
             )}
-            
+
             <div className="members-modal-footer">
               <button
                 className="modal-btn cancel-btn"
@@ -561,7 +596,7 @@ const ProjectsPage = () => {
               >
                 Close
               </button>
-              
+
               {selectedMembers.length > 0 && (
                 <button
                   className="modal-btn submit-btn"
@@ -582,13 +617,13 @@ const ProjectsPage = () => {
             <h3>Are you sure?</h3>
             <p>You will not be able to recover your project</p>
             <div className="delete-modal-actions">
-              <button 
+              <button
                 className="delete-cancel-btn"
                 onClick={() => setShowDeleteModal(false)}
               >
                 No, keep the project
               </button>
-              <button 
+              <button
                 className="delete-confirm-btn"
                 onClick={() => {
                   deleteProject(projectToDelete._id);

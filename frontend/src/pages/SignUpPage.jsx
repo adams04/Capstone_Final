@@ -36,7 +36,7 @@ const SignUpPage = () => {
       setError('Passwords do not match');
       return;
     }
-    
+
     try {
       const response = await authAPI.register({
         name: formData.name,
@@ -44,7 +44,7 @@ const SignUpPage = () => {
         password: formData.password,
         profession: formData.profession
       });
-      
+
       localStorage.setItem('token', response.token);
       localStorage.setItem('user', JSON.stringify(response.user));
       navigate('/board');
@@ -58,7 +58,7 @@ const SignUpPage = () => {
       <div className="login-form-container">
         <h2 className="login-title">Sign Up</h2>
         {error && <div className="error-message">{error}</div>}
-        
+
         <form className="login-form" onSubmit={handleSubmit}>
           <div className="input-group">
             <input
@@ -120,12 +120,12 @@ const SignUpPage = () => {
               required
             />
           </div>
-          
+
           <button type="submit" className="login-submit-btn">
             Create Account
           </button>
         </form>
-        
+
         <p className="signup-link">
           Already have an account? <Link to="/login" className="signup-link-text">Log in</Link>
         </p>

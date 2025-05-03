@@ -55,7 +55,6 @@ const AIChatBot = ({
     }
   };
 
-
   const switchChat = (chatType) => {
     if (!isGenerating) {
       setActiveChat(chatType);
@@ -112,35 +111,35 @@ const AIChatBot = ({
             ))}
           </div>
           
-          <div className="ai-input-container">
-            <input
-              type="text"
-              value={newMessage}
-              onChange={(e) => setNewMessage(e.target.value)}
-              placeholder={
-                activeChat === 'tasks' 
-                  ? "Describe tasks needed..." 
-                  : "Click the button to generate standup"
-              }
-              onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
-              aria-label="Type your message"
-              disabled={activeChat === 'standup'}
-            />
-            <button 
-              onClick={handleSendMessage}
-              disabled={
-                (activeChat === 'tasks' && !newMessage.trim()) || 
-                (activeChat === 'standup' && isGenerating)
-              }
-              aria-label="Send message"
-            >
-              {activeChat === 'standup' && isGenerating ? (
-                "Generating..."
-              ) : (
+          {activeChat === 'tasks' ? (
+            <div className="ai-input-container">
+              <input
+                type="text"
+                value={newMessage}
+                onChange={(e) => setNewMessage(e.target.value)}
+                onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
+                aria-label="Type your message"
+                placeholder="Describe your project..."
+              />
+              <button 
+                onClick={handleSendMessage}
+                disabled={!newMessage.trim()}
+                aria-label="Send message"
+              >
                 <FiSend />
-              )}
-            </button>
-          </div>
+              </button>
+            </div>
+          ) : (
+            <div className="ai-standup-generator-container">
+              <button
+                className="ai-standup-generator-button"
+                onClick={handleSendMessage}
+                disabled={isGenerating}
+              >
+                {isGenerating ? 'Generating Standup...' : 'Generate My Standup'}
+              </button>
+            </div>
+          )}
         </div>
       )}
     </div>
