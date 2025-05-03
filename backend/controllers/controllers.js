@@ -7,7 +7,8 @@ const Ticket = require('../models/Ticket');
 const Notifications = require('../models/Notifications');
 const Comment = require('../models/Comment');
 const mongoose = require('mongoose');
-const { Types } = require('mongoose');
+const bcrypt = require('bcrypt');
+
 let io;
 
 function setSocketInstance(ioInstance) {
@@ -66,8 +67,8 @@ const notifyAssignedUsers = async (userIds, ticketTitle) => {
 // Register
 const register = async (req, res) => {
     try {
-        const { name, surname, email, password,profession, dateOfBirth } = req.body;
-        
+        const { name, surname, email, password, profession, dateOfBirth } = req.body;
+
         const existingUser = await User.findOne({ email });
         if (existingUser) {
             return res.status(400).json({ error: 'Email already in use' });
@@ -77,20 +78,15 @@ const register = async (req, res) => {
             name,
             surname,
             email,
-            passwordHash: password,
-            profession: profession,
+            password, // uses virtual
+            profession,
             dateOfBirth,
             settings: { theme: 'light' }
         });
 
         await user.save();
-        
-        // Generate token after successful registration
-        const token = jwt.sign(
-            { userId: user._id },
-            process.env.JWT_SECRET,
-            { expiresIn: '1h' }
-        );
+
+        const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
 
         res.status(201).json({
             token,
@@ -117,8 +113,11 @@ const login = async (req, res) => {
             return res.status(401).json({ error: 'Invalid credentials' });
         }
 
+        console.log('Login attempt:', { email, password }); // NEVER in production
+
         // Compare plain text password with stored hash
         const isMatch = await user.comparePassword(password);
+        console.log('Password match:', isMatch);
         if (!isMatch) {
             return res.status(401).json({ error: 'Invalid credentials' });
         }
@@ -175,7 +174,6 @@ const getUserBasicInfoById = async (req, res) => {
 };
 
 
-
 // Update User Profile
 const updateUserProfile = async (req, res) => {
     try {
@@ -200,6 +198,37 @@ const updateUserProfile = async (req, res) => {
         res.status(500).send("Error updating user profile.");
     }
 };
+
+
+// Controller for updating password
+const changePassword = async (req, res) => {
+    try {
+        const { oldPassword, newPassword } = req.body;
+
+        if (!oldPassword || !newPassword) {
+            return res.status(400).send("Old password and new password are required.");
+        }
+
+        const user = await User.findById(req.user._id);
+        if (!user) {
+            return res.status(404).send("User not found.");
+        }
+
+        const isMatch = await user.comparePassword(oldPassword);
+        if (!isMatch) {
+            return res.status(400).send("Old password is incorrect.");
+        }
+
+        user.password = newPassword; // ✅ Use virtual
+        await user.save();
+
+        res.status(200).send("Password updated successfully.");
+    } catch (err) {
+        console.error("Error changing password:", err);
+        res.status(500).send("Error changing password.");
+    }
+};
+
 
 
 // Delete User
@@ -1382,7 +1411,7 @@ const getUserCalendarEvents = async (req, res) => {
 
         // Map into calendar event format
         const events = tickets.map(ticket => ({
-            ticketName: ticket.title,   
+            ticketName: ticket.title,
             boardName: ticket.boardId?.name || 'N/A',
             deadline: ticket.deadline
         }));
@@ -1403,5 +1432,5 @@ removeUserFromTicket,getUserProfile, updateUserProfile, deleteUser,
 getNotifications,createNotification,markNotificationRead, deleteNotification,
 generateTicketsFromPrompt, getUserBasicInfoById, addComment,
 getCommentsForTicket,deleteComment,getTicketAssignees,generateDailyStandup,
-getMyTicketsForBoard, uploadPicture, getUserCalendarEvents};
+getMyTicketsForBoard, uploadPicture, getUserCalendarEvents, changePassword};
 

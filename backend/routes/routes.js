@@ -10,7 +10,7 @@ removeUserFromTicket,getUserProfile,updateUserProfile,
 generateTicketsFromPrompt,getMyTickets, getUserBasicInfoById,addComment,
     getCommentsForTicket,deleteComment,getTicketAssignees,
 generateDailyStandup,getMyTicketsForBoard, uploadPicture,
-getUserCalendarEvents} = require('../controllers/controllers');
+getUserCalendarEvents, changePassword} = require('../controllers/controllers');
 
 
 // Calendar
@@ -23,6 +23,7 @@ router.get('/user-profile', authMiddleware, getUserProfile);
 router.put('/update-profile', authMiddleware, updateUserProfile);
 router.delete('/delete-user', authMiddleware, deleteUser);
 router.get('/user/:userID/basic-info', getUserBasicInfoById);
+router.put('/user/change-password', authMiddleware, changePassword);
 
 
 //ticket
