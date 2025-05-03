@@ -9,8 +9,12 @@ removeUserFromTicket,getUserProfile,updateUserProfile,
     deleteUser,getNotifications,createNotification,markNotificationRead, deleteNotification,
 generateTicketsFromPrompt,getMyTickets, getUserBasicInfoById,addComment,
     getCommentsForTicket,deleteComment,getTicketAssignees,
-generateDailyStandup,getMyTicketsForBoard, uploadPicture} = require('../controllers/controllers');
+generateDailyStandup,getMyTicketsForBoard, uploadPicture,
+getUserCalendarEvents} = require('../controllers/controllers');
 
+
+// Calendar
+router.get('/calendar', authMiddleware, getUserCalendarEvents);
 
 //User
 router.post('/register', register);
