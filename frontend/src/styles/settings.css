@@ -252,3 +252,168 @@
     background-color: #252927;
     border: 1px solid #444;
   }
+
+
+.forms-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+
+/* Password Modal Container */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.password-modal {
+  background: #252927;
+  border-radius: 12px;
+  padding: 2rem;
+  width: 100%;
+  max-width: 500px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+/* Modal Header */
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #444;
+  
+  h3 {
+    margin: 0;
+    color: #B50D8A;
+    font-size: 1.5rem;
+  }
+}
+
+.close-modal-btn {
+  background: none;
+  border: none;
+  color: #B9B9B9;
+  font-size: 1.5rem;
+  cursor: pointer;
+  padding: 0.5rem;
+  transition: color 0.2s;
+  
+  &:hover {
+    color: #E81352;
+  }
+}
+
+/* Password Form */
+.password-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.password-input-container {
+  position: relative;
+  
+  input {
+    background: #363937;
+    color: #B9B9B9;
+    border: 1px solid #444;
+    padding: 0.8rem;
+    padding-right: 40px;
+    border-radius: 6px;
+    width: 100%;
+    transition: border-color 0.2s;
+    
+    &:focus {
+      outline: none;
+      border-color: #B50D8A;
+    }
+  }
+}
+
+.password-toggle {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: #B9B9B9;
+  cursor: pointer;
+  padding: 5px;
+  transition: color 0.2s;
+  
+  &:hover {
+    color: #B50D8A;
+  }
+}
+
+/* Modal Actions */
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.modal-btn {
+  padding: 0.8rem 1.5rem;
+  border-radius: 6px;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  
+  &.cancel-btn {
+    background: #363937;
+    color: #B9B9B9;
+    border: 1px solid #444;
+    
+    &:hover {
+      background: #444;
+    }
+  }
+  
+  &.submit-btn {
+    background: linear-gradient(90deg, #4E01FD 0%, #E81352 100%);
+    color: white;
+    border: none;
+    
+    &:hover:not(:disabled) {
+      transform: translateY(-1px);
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    &:disabled {
+      opacity: 0.7;
+      cursor: not-allowed;
+    }
+  }
+}
+
+/* Change Password Button (in main form) */
+.change-password-button {
+  font-weight: 500;
+  width: 100%;
+  cursor: pointer;
+  text-align: center;
+  padding: 0.8rem;
+  border: 1px solid #252927;
+  border-radius: 6px;
+  font-size: 1rem;
+  transition: all 0.2s;
+  background-color: #252927;
+  color: #B9B9B9;
+  margin-top: 10px;
+}

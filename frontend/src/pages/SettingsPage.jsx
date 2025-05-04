@@ -2,9 +2,10 @@ import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   FiLayout, FiFolder, FiCheckSquare, FiCalendar,
-  FiMessageSquare, FiSettings, FiLogOut
+  FiMessageSquare, FiSettings, FiEye, FiEyeOff, FiX
 } from 'react-icons/fi';
 import DatePicker from "react-datepicker";
+import TopNavigation from './TopNavigation';
 import "react-datepicker/dist/react-datepicker.css";
 import { settingsAPI } from '../services/api';
 import '../styles/settings.css';
@@ -25,6 +26,17 @@ const SettingsPage = () => {
     profileImage: ''
   });
   const [theme, setTheme] = useState('light');
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [passwordData, setPasswordData] = useState({
+    oldPassword: '',
+    newPassword: '',
+    confirmPassword: ''
+  });
+  const [showPassword, setShowPassword] = useState({
+    oldPassword: false,
+    newPassword: false,
+    confirmPassword: false
+  });
   const navigate = useNavigate();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
@@ -54,7 +66,6 @@ const SettingsPage = () => {
           dateOfBirth: userData.dateOfBirth || '',
           profileImage: userData.profileImage || ''
         });
-        // Initialize date picker if date exists
         if (userData.dateOfBirth) {
           setStartDate(new Date(userData.dateOfBirth));
         }
@@ -94,7 +105,6 @@ const SettingsPage = () => {
         profession: updatedUser.profession,
         dateOfBirth: updatedUser.dateOfBirth
       });
-      // Update date picker with new date
       if (updatedUser.dateOfBirth) {
         setStartDate(new Date(updatedUser.dateOfBirth));
       }
@@ -126,6 +136,52 @@ const SettingsPage = () => {
     }
   };
 
+  const handlePasswordChange = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    
+    if (passwordData.newPassword !== passwordData.confirmPassword) {
+      setError('New passwords do not match');
+      setLoading(false);
+      return;
+    }
+
+    try {
+      await settingsAPI.changePassword({
+        oldPassword: passwordData.oldPassword,
+        newPassword: passwordData.newPassword
+      });
+      setError('');
+      setShowPasswordModal(false);
+      setPasswordData({
+        oldPassword: '',
+        newPassword: '',
+        confirmPassword: ''
+      });
+    } catch (error) {
+      setError(error.response?.data?.message || 'Failed to change password');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const togglePasswordVisibility = (field) => {
+    setShowPassword(prev => ({
+      ...prev,
+      [field]: !prev[field]
+    }));
+  };
+
+  const resetPasswordForm = () => {
+    setPasswordData({
+      oldPassword: '',
+      newPassword: '',
+      confirmPassword: ''
+    });
+    setError('');
+    setShowPasswordModal(false);
+  };
+
   if (loading) return <div className="loading">Loading...</div>;
   if (!user) return <div className="error">Failed to load user information</div>;
 
@@ -135,7 +191,7 @@ const SettingsPage = () => {
         <ul className="sidebar-menu">
           {[
             { icon: <FiLayout />, name: 'Dashboard', id: 'dashboard' },
-            { icon: <FiFolder />, name: 'Projects', id: 'projects', path: '/projects' },
+            { icon: <FiFolder />, name: 'Projects', id: 'projects', path: '/board' },
             { icon: <FiCheckSquare />, name: 'My Tasks', id: 'mytasks', path: '/mytasks' },
             { icon: <FiCalendar />, name: 'Calendar', id: 'calendar', path: '/calendar' },
             { icon: <FiMessageSquare />, name: 'Conversation', id: 'conversation' },
@@ -157,44 +213,8 @@ const SettingsPage = () => {
       </nav>
 
       <div className="settings-content">
-        <header className="top-nav">
-          {/* TaskFlow logo on the left */}
-          <div className="nav-brand">
-            <h1>TaskFlow</h1>
-          </div>
-
-          {/* User profile on the right */}
-          <div
-            className={`user-profile-container ${isDropdownOpen ? 'active' : ''}`}
-            onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-            ref={dropdownRef}
-          >
-            {user.profileImage ? (
-              <img
-                src={user.profileImage}
-                alt="Profile"
-                className="user-avatar"
-              />
-            ) : (
-              <div className="user-avatar">
-                {user.name.charAt(0).toUpperCase()}
-              </div>
-            )}
-            <span className="user-name">{user.name}</span>
-            <div className="user-dropdown">
-              <button
-                className="logout-btn"
-                onClick={() => {
-                  localStorage.removeItem('token');
-                  window.location.href = '/';
-                }}
-              >
-                <FiLogOut /> Logout
-              </button>
-            </div>
-          </div>
-        </header>
-        {error && <div className="error-message">{error}</div>}
+        <TopNavigation />
+        {error && !showPasswordModal && <div className="error-message">{error}</div>}
 
         <div className="profile-section">
           <div className="profile-image-container">
@@ -272,6 +292,16 @@ const SettingsPage = () => {
             </div>
 
             <div className="form-group">
+              <button
+                type="button"
+                className="change-password-button"
+                onClick={() => setShowPasswordModal(true)}
+              >
+                Change Password
+              </button>
+            </div>
+
+            <div className="form-group">
               <label>Theme</label>
               <div className="theme-options">
                 <button
@@ -297,6 +327,118 @@ const SettingsPage = () => {
           </form>
         </div>
       </div>
+
+      
+
+      {/* Password Change Modal */}
+      {showPasswordModal && (
+        <div className="modal-overlay">
+          <div className="password-modal">
+            <div className="modal-header">
+              <h3>Change Password</h3>
+              <button 
+                className="close-modal-btn"
+                onClick={resetPasswordForm}
+              >
+                <FiX />
+              </button>
+            </div>
+            
+            {error && <div className="error-message">{error}</div>}
+
+            <form onSubmit={handlePasswordChange} className="password-form">
+              <div className="form-group">
+                <label>Current Password</label>
+                <div className="password-input-container">
+                  <input
+                    type={showPassword.oldPassword ? "text" : "password"}
+                    name="oldPassword"
+                    value={passwordData.oldPassword}
+                    onChange={(e) => setPasswordData({
+                      ...passwordData,
+                      oldPassword: e.target.value
+                    })}
+                    required
+                  />
+                  <button
+                    type="button"
+                    className="password-toggle"
+                    onClick={() => togglePasswordVisibility('oldPassword')}
+                  >
+                    {showPassword.oldPassword ? <FiEyeOff /> : <FiEye />}
+                  </button>
+                </div>
+              </div>
+
+              <div className="form-group">
+                <label>New Password</label>
+                <div className="password-input-container">
+                  <input
+                    type={showPassword.newPassword ? "text" : "password"}
+                    name="newPassword"
+                    value={passwordData.newPassword}
+                    onChange={(e) => setPasswordData({
+                      ...passwordData,
+                      newPassword: e.target.value
+                    })}
+                    required
+                    minLength="6"
+                  />
+                  <button
+                    type="button"
+                    className="password-toggle"
+                    onClick={() => togglePasswordVisibility('newPassword')}
+                  >
+                    {showPassword.newPassword ? <FiEyeOff /> : <FiEye />}
+                  </button>
+                </div>
+              </div>
+
+              <div className="form-group">
+                <label>Confirm New Password</label>
+                <div className="password-input-container">
+                  <input
+                    type={showPassword.confirmPassword ? "text" : "password"}
+                    name="confirmPassword"
+                    value={passwordData.confirmPassword}
+                    onChange={(e) => setPasswordData({
+                      ...passwordData,
+                      confirmPassword: e.target.value
+                    })}
+                    required
+                    minLength="6"
+                  />
+                  <button
+                    type="button"
+                    className="password-toggle"
+                    onClick={() => togglePasswordVisibility('confirmPassword')}
+                  >
+                    {showPassword.confirmPassword ? <FiEyeOff /> : <FiEye />}
+                  </button>
+                </div>
+              </div>
+
+              <div className="modal-actions">
+                <button
+                  type="button"
+                  className="modal-btn cancel-btn"
+                  onClick={resetPasswordForm}
+                  disabled={loading}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="modal-btn submit-btn"
+                  disabled={loading}
+                >
+                  {loading ? 'Updating...' : 'Update Password'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

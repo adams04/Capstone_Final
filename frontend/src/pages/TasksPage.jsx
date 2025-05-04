@@ -3,9 +3,10 @@ import { useParams, useNavigate } from 'react-router-dom';
 import {
     FiLayout, FiFolder, FiCheckSquare, FiCalendar,
     FiMessageSquare, FiSettings, FiPlus, FiTrash2,
-    FiEdit2, FiUsers, FiLogOut
+    FiEdit2, FiUsers
 } from 'react-icons/fi';
 import { authAPI, taskAPI, boardAPI } from '../services/api';
+import TopNavigation from './TopNavigation';
 import AIChatBot from './AIChatBot';
 import '../styles/sidebar.css';
 import '../styles/top-navigation.css';
@@ -588,7 +589,7 @@ const TasksPage = () => {
                 <ul className="sidebar-menu">
                     {[
                         { icon: <FiLayout />, name: 'Dashboard', id: 'dashboard', path: '/' },
-                        { icon: <FiFolder />, name: 'Projects', id: 'projects', path: '/projects', active: true },
+                        { icon: <FiFolder />, name: 'Projects', id: 'projects', path: '/board', active: true },
                         { icon: <FiCheckSquare />, name: 'My Tasks', id: 'mytasks', path: '/mytasks' },
                         { icon: <FiCalendar />, name: 'Calendar', id: 'calendar', path: '/calendar' },
                         { icon: <FiMessageSquare />, name: 'Conversation', id: 'conversation' },
@@ -606,44 +607,7 @@ const TasksPage = () => {
                 </ul>
             </nav>
             <div className="content-area">
-                <header className="top-nav">
-                    {/* TaskFlow logo on the left */}
-                    <div className="nav-brand">
-                        <h1>TaskFlow</h1>
-                    </div>
-
-                    {/* User profile on the right */}
-                    <div
-                        className={`user-profile-container ${isDropdownOpen ? 'active' : ''}`}
-                        onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                        ref={dropdownRef}
-                    >
-                        {user.profileImage ? (
-                            <img
-                                src={user.profileImage}
-                                alt="Profile"
-                                className="user-avatar"
-                            />
-                        ) : (
-                            <div className="user-avatar">
-                                {user.name.charAt(0).toUpperCase()}
-                            </div>
-                        )}
-                        <span className="user-name">{user.name}</span>
-                        <div className="user-dropdown">
-                            <button
-                                className="logout-btn"
-                                onClick={() => {
-                                    localStorage.removeItem('token');
-                                    window.location.href = '/';
-                                }}
-                            >
-                                <FiLogOut /> Logout
-                            </button>
-                        </div>
-                    </div>
-                </header>
-
+               <TopNavigation />
                 <div className="board-header">
                     <div className="board-title-container">
                         <h2 className="board-title">Board - {boardName}</h2>
@@ -854,7 +818,7 @@ const TasksPage = () => {
                                     <div key={comment._id} className="comment-item">
                                         <div className="comment-header">
                                             <span className="comment-author">
-                                                {comment.user?.name || 'Unknown user'}
+                                               {comment.user?.name || (comment.userId === user._id ? user.name : 'Unknown user')}
                                             </span>
                                             <span className="comment-date">
                                                 {new Date(comment.createdAt).toLocaleString()}

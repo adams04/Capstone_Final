@@ -22,22 +22,29 @@ const LoginPage = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
+      console.log('Form data:', formData); // Log form data for debugging
+      
       const response = await authAPI.login({
         email: formData.email,
         password: formData.password
       });
       
+      console.log('Login response:', response); // Log response from API
+      
       // Store the token and user data
       localStorage.setItem('token', response.token);
       localStorage.setItem('user', JSON.stringify(response.user));
+  
+      console.log('User and token saved in localStorage');
       
       // Force refresh to ensure ProtectedRoute catches the auth change
       window.location.href = '/board';
-      
     } catch (error) {
+      console.error('Login error:', error); // Log the error if login fails
       setError(error.response?.data?.error || 'Login failed');
     }
   };
+  
 
   return (
     <div className="login-page">

@@ -73,6 +73,37 @@ export const authAPI = {
     }
   },
 
+  getNotifications: async (userId) => {
+    try {
+      const response = await API.get(`/auth/notifications/${userId}`);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching notifications:', error);
+      throw error;
+    }
+  },
+  
+
+  markNotificationRead: async (notificationId) => {
+    try {
+      const response = API.patch(`/auth/${notificationId}/mark-read`);
+      return response.data;
+    } catch (error) {
+      console.error('Error marking notification as read:', error);
+      throw error;
+    }
+  },
+
+  deleteNotification: async (notificationId) => {
+    try {
+      const response = await API.delete(`/auth/${notificationId}`);
+      return response.data;
+    } catch (error) {
+      console.error('Error deleting notification:', error);
+      throw error;
+    }
+  },
+
 };
 
 export const boardAPI = {
@@ -359,8 +390,20 @@ export const settingsAPI = {
       console.error('Error fetching user profile:', error);
       throw error;
     }
-  }
+  },
+
+  changePassword: async (passwordData) => {
+    try {
+      const response = await API.put('/auth/user/change-password', passwordData);
+      return response.data;
+    } catch (error) {
+      console.error('Error changing password:', error);
+      throw error;
+    }
+  },
 };
+
+
 
 
 function isValidObjectId(id) {

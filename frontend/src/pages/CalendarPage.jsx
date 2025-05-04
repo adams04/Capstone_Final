@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   FiLayout, FiFolder, FiCheckSquare, FiCalendar,
-  FiMessageSquare, FiSettings, FiLogOut
+  FiMessageSquare, FiSettings
 } from 'react-icons/fi';
 import Calendar from 'react-calendar';
 import 'react-calendar/dist/Calendar.css';
@@ -10,6 +10,7 @@ import { authAPI, taskAPI } from '../services/api';
 import '../styles/sidebar.css';
 import '../styles/top-navigation.css';
 import '../styles/calendar.css';
+import TopNavigation from './TopNavigation';
 
 const CalendarPage = () => {
   const navigate = useNavigate();
@@ -118,7 +119,7 @@ const CalendarPage = () => {
         <ul className="sidebar-menu">
           {[
             { icon: <FiLayout />, name: 'Dashboard', id: 'dashboard', path: '/' },
-            { icon: <FiFolder />, name: 'Projects', id: 'projects', path: '/projects' },
+            { icon: <FiFolder />, name: 'Projects', id: 'projects', path: '/board' },
             { icon: <FiCheckSquare />, name: 'My Tasks', id: 'mytasks', path: '/mytasks' },
             { icon: <FiCalendar />, name: 'Calendar', id: 'calendar', path: '/calendar' },
             { icon: <FiMessageSquare />, name: 'Conversation', id: 'conversation', path: '/conversation' },
@@ -137,42 +138,7 @@ const CalendarPage = () => {
       </nav>
 
       <div className="content-area">
-        <header className="top-nav">
-          <div className="nav-brand">
-            <h1>TaskFlow</h1>
-          </div>
-
-          <div
-            className={`user-profile-container ${isDropdownOpen ? 'active' : ''}`}
-            onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-            ref={dropdownRef}
-          >
-            {user.profileImage ? (
-              <img
-                src={user.profileImage}
-                alt="Profile"
-                className="user-avatar"
-              />
-            ) : (
-              <div className="user-avatar">
-                {user.name.charAt(0).toUpperCase()}
-              </div>
-            )}
-            <span className="user-name">{user.name}</span>
-            <div className="user-dropdown">
-              <button
-                className="logout-btn"
-                onClick={() => {
-                  localStorage.removeItem('token');
-                  window.location.href = '/';
-                }}
-              >
-                <FiLogOut /> Logout
-              </button>
-            </div>
-          </div>
-        </header>
-
+        <TopNavigation/>
         <div className="calendar-container">
           <h2 className="calendar-title">My Calendar</h2>
           
