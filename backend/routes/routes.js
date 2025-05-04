@@ -6,11 +6,12 @@ const { register, login, createBoard, myBoards, deleteBoard,
     createTicket, getTickets,deleteTicket, board,updateBoard,
     getSingleTicket,updateTicket,assignUserToTicket,
 removeUserFromTicket,getUserProfile,updateUserProfile,
-    deleteUser,getNotifications,createNotification,markNotificationRead, deleteNotification,
-generateTicketsFromPrompt,getMyTickets, getUserBasicInfoById,addComment,
-    getCommentsForTicket,deleteComment,getTicketAssignees,
+    deleteUser,getNotifications,createNotification,markNotificationRead,
+    deleteNotification, generateTicketsFromPrompt,getMyTickets, getUserBasicInfoById,
+    addComment,getCommentsForTicket,deleteComment,getTicketAssignees,
 generateDailyStandup,getMyTicketsForBoard, uploadPicture,
-getUserCalendarEvents, changePassword} = require('../controllers/controllers');
+getUserCalendarEvents, changePassword,  setGoogleCredentials,
+    createEvent} = require('../controllers/controllers');
 
 
 // Calendar
@@ -66,5 +67,9 @@ router.delete('/tickets/:ticketId/comments/:commentId',authMiddleware, deleteCom
 
 // Upload Picture
 router.post('/upload-profile-picture',authMiddleware, upload.single('file'),uploadPicture);
+
+// Google calendar
+router.post('/google-calendar/set-credentials', authMiddleware, setGoogleCredentials);
+router.post('/google-calendar/create-event', authMiddleware, createEvent);
 
 module.exports = router;

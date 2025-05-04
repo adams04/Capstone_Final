@@ -1,5 +1,6 @@
 require('dotenv').config();
 
+let io;
 const User = require('../models/User');
 const jwt = require('jsonwebtoken');
 const Board = require('../models/Board');
@@ -7,9 +8,23 @@ const Ticket = require('../models/Ticket');
 const Notifications = require('../models/Notifications');
 const Comment = require('../models/Comment');
 const mongoose = require('mongoose');
-const bcrypt = require('bcrypt');
+const fs = require('fs');
+const { google } = require('googleapis');
+const { OAuth2 } = google.auth;
 
-let io;
+
+const oauth2Client = new OAuth2(
+    process.env.GOOGLE_CLIENT_ID,
+    process.env.GOOGLE_CLIENT_SECRET,
+    process.env.GOOGLE_REDIRECT_URI
+);
+
+//helper for google calendar
+function setGoogleCredentials(refreshToken) {
+    oauth2Client.setCredentials({
+        refresh_token: refreshToken,
+    });
+}
 
 function setSocketInstance(ioInstance) {
     io = ioInstance;
@@ -1423,6 +1438,34 @@ const getUserCalendarEvents = async (req, res) => {
     }
 };
 
+// google calendar
+async function createEvent(eventDetails) {
+    try {
+        const calendar = google.calendar({ version: 'v3', auth: oauth2Client });
+
+        const event = {
+            summary: eventDetails.summary,
+            description: eventDetails.description,
+            start: {
+                dateTime: eventDetails.startDateTime,
+                timeZone: 'UTC',
+            },
+            end: {
+                dateTime: eventDetails.endDateTime,
+                timeZone: 'UTC',
+            },
+        };
+
+        const res = await calendar.events.insert({
+            calendarId: 'primary',
+            resource: event,
+        });
+
+        console.log('Event created: ', res.data.htmlLink);
+    } catch (err) {
+        console.log('Error creating event: ', err);
+    }
+}
 
 
 module.exports = {
@@ -1433,6 +1476,7 @@ module.exports = {
     getNotifications, createNotification, markNotificationRead, deleteNotification,
     generateTicketsFromPrompt, getUserBasicInfoById, addComment,
     getCommentsForTicket, deleteComment, getTicketAssignees, generateDailyStandup,
-    getMyTicketsForBoard, uploadPicture, getUserCalendarEvents, changePassword
+    getMyTicketsForBoard, uploadPicture, getUserCalendarEvents, changePassword,
+    setGoogleCredentials, createEvent
 };
 
