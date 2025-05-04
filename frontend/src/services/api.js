@@ -313,6 +313,16 @@ export const taskAPI = {
     }
   },
 
+  getCalendarEvents: async () => {
+    try {
+      const { data } = await API.get('/auth/calendar');
+      return data;
+    } catch (error) {
+      console.error('Error fetching calendar events:', error);
+      throw error;
+    }
+  },
+
 };
 
 export const settingsAPI = {

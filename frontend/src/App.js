@@ -7,6 +7,7 @@ import BoardPage from './pages/BoardPage';
 import TasksPage from './pages/TasksPage'; 
 import SettingsPage from './pages/SettingsPage';
 import MyTasksPage from './pages/MyTasksPage';
+import CalendarPage from './pages/CalendarPage';
 import { AuthProvider } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
 
@@ -21,6 +22,7 @@ function App() {
           <Route path="/projects" element={<BoardPage />} />
           <Route path="/settings" element={<SettingsPage />} />
           <Route path="/mytasks" element={<MyTasksPage />} />
+          <Route path="/calendar" element={<CalendarPage />} />
           <Route 
             path="/board" 
             element={

@@ -281,7 +281,7 @@ const ProjectsPage = () => {
             { icon: <FiLayout />, name: 'Dashboard', id: 'dashboard' },
             { icon: <FiFolder />, name: 'Projects', id: 'projects', path: '/projects' },
             { icon: <FiCheckSquare />, name: 'My Tasks', id: 'mytasks', path: '/mytasks' },
-            { icon: <FiCalendar />, name: 'Calendar', id: 'calendar' },
+            { icon: <FiCalendar />, name: 'Calendar', id: 'calendar', path: '/calendar' },
             { icon: <FiMessageSquare />, name: 'Conversation', id: 'conversation' },
             { icon: <FiSettings />, name: 'Settings', id: 'settings', path: '/settings' }
           ].map((item) => (
