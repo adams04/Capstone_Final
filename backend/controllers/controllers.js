@@ -9,8 +9,8 @@ const Notifications = require('../models/Notifications');
 const Comment = require('../models/Comment');
 const mongoose = require('mongoose');
 const fs = require('fs');
-const { google } = require('googleapis');
-const { OAuth2 } = google.auth;
+const {google} = require('googleapis');
+const {OAuth2} = google.auth;
 
 
 const oauth2Client = new OAuth2(
@@ -68,10 +68,10 @@ const notifyAssignedUsers = async (userIds, ticketTitle) => {
 
             if (io) io.to(userId.toString()).emit('new-notification', notification);
             console.log(`Notification created `, notification._id);
-            return { success: true, userId };
+            return {success: true, userId};
         } catch (error) {
             console.error(`Failed to notify user ${userId}:`, error);
-            return { success: false, userId, error: error.message };
+            return {success: false, userId, error: error.message};
         }
     }));
 
@@ -82,11 +82,11 @@ const notifyAssignedUsers = async (userIds, ticketTitle) => {
 // Register
 const register = async (req, res) => {
     try {
-        const { name, surname, email, password, profession, dateOfBirth } = req.body;
+        const {name, surname, email, password, profession, dateOfBirth} = req.body;
 
-        const existingUser = await User.findOne({ email });
+        const existingUser = await User.findOne({email});
         if (existingUser) {
-            return res.status(400).json({ error: 'Email already in use' });
+            return res.status(400).json({error: 'Email already in use'});
         }
 
         const user = new User({
@@ -96,12 +96,12 @@ const register = async (req, res) => {
             password, // uses virtual
             profession,
             dateOfBirth,
-            settings: { theme: 'light' }
+            settings: {theme: 'light'}
         });
 
         await user.save();
 
-        const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
+        const token = jwt.sign({userId: user._id}, process.env.JWT_SECRET, {expiresIn: '1h'});
 
         res.status(201).json({
             token,
@@ -113,7 +113,7 @@ const register = async (req, res) => {
             }
         });
     } catch (error) {
-        res.status(500).json({ error: 'Registration failed: ' + error.message });
+        res.status(500).json({error: 'Registration failed: ' + error.message});
     }
 };
 
@@ -121,26 +121,26 @@ const register = async (req, res) => {
 // Login
 const login = async (req, res) => {
     try {
-        const { email, password } = req.body; // Changed from passwordHash to password
+        const {email, password} = req.body; // Changed from passwordHash to password
 
-        const user = await User.findOne({ email });
+        const user = await User.findOne({email});
         if (!user) {
-            return res.status(401).json({ error: 'Invalid credentials' });
+            return res.status(401).json({error: 'Invalid credentials'});
         }
 
-        console.log('Login attempt:', { email, password }); // NEVER in production
+        console.log('Login attempt:', {email, password}); // NEVER in production
 
         // Compare plain text password with stored hash
         const isMatch = await user.comparePassword(password);
         console.log('Password match:', isMatch);
         if (!isMatch) {
-            return res.status(401).json({ error: 'Invalid credentials' });
+            return res.status(401).json({error: 'Invalid credentials'});
         }
 
         const token = jwt.sign(
-            { userId: user._id },
+            {userId: user._id},
             process.env.JWT_SECRET,
-            { expiresIn: '1h' }
+            {expiresIn: '1h'}
         );
 
         res.json({
@@ -152,7 +152,7 @@ const login = async (req, res) => {
             }
         });
     } catch (error) {
-        res.status(500).json({ error: 'Login failed: ' + error.message });
+        res.status(500).json({error: 'Login failed: ' + error.message});
     }
 };
 
@@ -172,11 +172,11 @@ const getUserProfile = async (req, res) => {
 // Get name and email of user by giving ID
 
 const getUserBasicInfoById = async (req, res) => {
-    const { userID } = req.params;
+    const {userID} = req.params;
 
     try {
         const user = await User.findById(userID).select('name email');
-        if (!user) return res.status(404).json({ error: "User not found" });
+        if (!user) return res.status(404).json({error: "User not found"});
 
         res.status(200).json({
             name: user.name,
@@ -184,7 +184,7 @@ const getUserBasicInfoById = async (req, res) => {
         });
     } catch (err) {
         console.error("Error fetching basic info:", err);
-        res.status(500).json({ error: "Internal server error" });
+        res.status(500).json({error: "Internal server error"});
     }
 };
 
@@ -202,7 +202,7 @@ const updateUserProfile = async (req, res) => {
         const updatedUser = await User.findByIdAndUpdate(
             req.user._id,
             updates,
-            { new: true, runValidators: true }
+            {new: true, runValidators: true}
         ).select('-passwordHash');
 
         if (!updatedUser) return res.status(404).send("User not found.");
@@ -218,7 +218,7 @@ const updateUserProfile = async (req, res) => {
 // Controller for updating password
 const changePassword = async (req, res) => {
     try {
-        const { oldPassword, newPassword } = req.body;
+        const {oldPassword, newPassword} = req.body;
 
         if (!oldPassword || !newPassword) {
             return res.status(400).send("Old password and new password are required.");
@@ -245,7 +245,6 @@ const changePassword = async (req, res) => {
 };
 
 
-
 // Delete User
 const deleteUser = async (req, res) => {
     try {
@@ -264,7 +263,7 @@ const deleteUser = async (req, res) => {
 // Create board
 const createBoard = async (req, res) => {
     try {
-        const { name, memberEmails, description } = req.body;
+        const {name, memberEmails, description} = req.body;
         const owner = req.user;
 
         if (!owner) {
@@ -272,13 +271,13 @@ const createBoard = async (req, res) => {
         }
 
         // Check for duplicate board name
-        const existingBoard = await Board.findOne({ name: name, owner: owner._id });
+        const existingBoard = await Board.findOne({name: name, owner: owner._id});
         if (existingBoard) {
             return res.status(400).send(`You already have a board named "${name}".`);
         }
 
         // Find all members by email
-        const members = await User.find({ email: { $in: memberEmails } });
+        const members = await User.find({email: {$in: memberEmails}});
         if (members.length !== memberEmails.length) {
             return res.status(400).send("Some member emails were not found.");
         }
@@ -294,8 +293,8 @@ const createBoard = async (req, res) => {
 
         await board.save();
 
-        // Send notifications to all members (including owner if you want)
-        const allRecipients = [...members, owner]; // Include owner if needed
+        // Send notifications to all members (excluding owner)
+        const allRecipients = members;
         console.log('Preparing notifications for:', allRecipients.length, 'users');
         await Promise.all(
             allRecipients.map(async (user) => {
@@ -307,10 +306,10 @@ const createBoard = async (req, res) => {
                         `You were added to the board: ${board.name}`
                     );
                     console.log(`Notification created for ${user.email}:`, notif._id);
-                    return { success: true, userId: user._id, notifId: notif._id };
+                    return {success: true, userId: user._id, notifId: notif._id};
                 } catch (error) {
                     console.error(`FAILED notification for ${user.email}:`, error.message);
-                    return { success: false, userId: user._id, error: error.message };
+                    return {success: false, userId: user._id, error: error.message};
                 }
             })
         );
@@ -333,8 +332,8 @@ const myBoards = async (req, res) => {
 
         const boards = await Board.find({
             $or: [
-                { owner: user._id },
-                { members: user._id }
+                {owner: user._id},
+                {members: user._id}
             ]
         });
 
@@ -348,29 +347,29 @@ const myBoards = async (req, res) => {
 // get single board
 const board = async (req, res) => {
     try {
-        const board = await Board.findOne({ _id: req.params.boardId, user: req.user.userId });
+        const board = await Board.findOne({_id: req.params.boardId, user: req.user.userId});
 
         if (!board) {
-            return res.status(404).json({ message: 'Board not found or not authorized' });
+            return res.status(404).json({message: 'Board not found or not authorized'});
         }
 
         res.json(board);
     } catch (error) {
         console.error(error);
-        res.status(500).json({ message: 'Server error' });
+        res.status(500).json({message: 'Server error'});
     }
 };
 
 // Update board
 const updateBoard = async (req, res) => {
-    const { name, description, addMembers = [], removeMembers = [] } = req.body;
-    const { boardId } = req.params;
+    const {name, description, addMembers = [], removeMembers = []} = req.body;
+    const {boardId} = req.params;
 
     try {
         // 1. Find the board with owner/member authorization
         const board = await Board.findOne({
             _id: boardId,
-            $or: [{ owner: req.user._id }, { members: req.user._id }]
+            $or: [{owner: req.user._id}, {members: req.user._id}]
         }).populate('members', '_id email');
 
         if (!board) {
@@ -393,7 +392,7 @@ const updateBoard = async (req, res) => {
 
         // 4. Handle member additions
         if (addMembers.length > 0) {
-            const usersToAdd = await User.find({ email: { $in: addMembers } });
+            const usersToAdd = await User.find({email: {$in: addMembers}});
             const userIdsToAdd = usersToAdd.map(user => user._id);
 
             // Filter out duplicates
@@ -408,7 +407,7 @@ const updateBoard = async (req, res) => {
 
         // 5. Handle member removals (fixed implementation)
         if (removeMembers.length > 0) {
-            const usersToRemove = await User.find({ email: { $in: removeMembers } });
+            const usersToRemove = await User.find({email: {$in: removeMembers}});
 
             // Validate all requested members exist
             const foundEmails = usersToRemove.map(u => u.email);
@@ -435,7 +434,7 @@ const updateBoard = async (req, res) => {
 
         // 7. Send notifications for newly added members
         if (addMembers.length > 0) {
-            const newUsers = await User.find({ email: { $in: addMembers } });
+            const newUsers = await User.find({email: {$in: addMembers}});
             await Promise.all(
                 newUsers.map(async (user) => {
                     try {
@@ -474,7 +473,7 @@ const updateBoard = async (req, res) => {
 // delete board
 const deleteBoard = async (req, res) => {
     try {
-        const { boardId } = req.params;
+        const {boardId} = req.params;
 
         if (!mongoose.Types.ObjectId.isValid(boardId)) {
             return res.status(400).send("Invalid board ID.");
@@ -487,7 +486,7 @@ const deleteBoard = async (req, res) => {
         }
 
         // Delete all tickets belonging to this board
-        await Ticket.deleteMany({ boardId: board._id });
+        await Ticket.deleteMany({boardId: board._id});
 
         res.status(200).send(`Board "${board.name}" and its tickets were deleted successfully.`);
     } catch (error) {
@@ -501,17 +500,17 @@ const deleteBoard = async (req, res) => {
 const createTicket = async (req, res) => {
     try {
         console.log("Request body:", req.body);
-        const { title, description, status, assignedToEmails, boardId, priority, deadline } = req.body;
+        const {title, description, status, assignedToEmails, boardId, priority, deadline} = req.body;
 
         // Validate required fields
         if (!title?.trim() || !boardId) {
-            return res.status(400).json({ message: "Title and board ID are required." });
+            return res.status(400).json({message: "Title and board ID are required."});
         }
 
         // Check if board exists and populate members
         const board = await Board.findById(boardId).populate('members');
         if (!board) {
-            return res.status(404).json({ message: "Board not found." });
+            return res.status(404).json({message: "Board not found."});
         }
 
         // Validate assigned users
@@ -519,7 +518,7 @@ const createTicket = async (req, res) => {
         if (assignedToEmails && assignedToEmails.length > 0) {
             // Find users by exact email match
             const assignedUsers = await User.find({
-                email: { $in: assignedToEmails }
+                email: {$in: assignedToEmails}
             });
 
             // Check if all emails were found
@@ -624,7 +623,7 @@ const getTickets = async (req, res) => {
         }
 
         // Fetch all tickets associated with the given board
-        const tickets = await Ticket.find({ boardId: board._id })
+        const tickets = await Ticket.find({boardId: board._id})
             .populate("assignedTo", "name email") // Populate the `assignedTo` field to get user details (name, email)
             .exec();
 
@@ -639,7 +638,7 @@ const getTickets = async (req, res) => {
 // Get single ticket
 const getSingleTicket = async (req, res) => {
     try {
-        const { ticketId } = req.params;
+        const {ticketId} = req.params;
 
         // Validate ticket ID format
         if (!mongoose.Types.ObjectId.isValid(ticketId)) {
@@ -663,13 +662,12 @@ const getSingleTicket = async (req, res) => {
 };
 
 
-
 // Get all tickets that are assigned to user
 const getMyTickets = async (req, res) => {
     try {
         const userId = req.user._id;
 
-        const tickets = await Ticket.find({ assignedTo: userId })
+        const tickets = await Ticket.find({assignedTo: userId})
             .populate("boardId", "name") // Optional: includes board name
             .select("-__v"); // Optional: excludes Mongoose internal field
 
@@ -687,7 +685,7 @@ const getMyTickets = async (req, res) => {
 // Gets tickets assigned to user from specified board
 const getMyTicketsForBoard = async (req, res) => {
     const userId = req.user._id;  // Assuming the user is authenticated and we have access to their ID
-    const { boardId } = req.params;  // Get the boardId from the route parameter
+    const {boardId} = req.params;  // Get the boardId from the route parameter
 
     try {
         // Fetch tickets assigned to the user and specific to the given board
@@ -698,13 +696,13 @@ const getMyTicketsForBoard = async (req, res) => {
             .select("-__v");  // Optional: exclude Mongoose internal field
 
         if (!tickets.length) {
-            return res.status(404).json({ message: "No tickets assigned to you for this board." });
+            return res.status(404).json({message: "No tickets assigned to you for this board."});
         }
 
         res.status(200).json(tickets);
     } catch (err) {
         console.error("Error fetching tickets for user in board:", err);
-        res.status(500).json({ message: "Error fetching tickets for the user in the board." });
+        res.status(500).json({message: "Error fetching tickets for the user in the board."});
     }
 };
 
@@ -718,24 +716,24 @@ const updateTicket = async (req, res) => {
             body: req.body
         });
 
-        const { ticketId } = req.params;
+        const {ticketId} = req.params;
         const updates = req.body;
 
         // Validate ticket ID
         if (!mongoose.Types.ObjectId.isValid(ticketId)) {
-            return res.status(400).json({ error: "Invalid ticket ID" });
+            return res.status(400).json({error: "Invalid ticket ID"});
         }
 
         // Find and validate ticket
         const ticket = await Ticket.findById(ticketId);
         if (!ticket) {
-            return res.status(404).json({ error: "Ticket not found" });
+            return res.status(404).json({error: "Ticket not found"});
         }
 
         // Find and validate board
         const board = await Board.findById(ticket.boardId);
         if (!board) {
-            return res.status(404).json({ error: "Board not found" });
+            return res.status(404).json({error: "Board not found"});
         }
 
         // Handle assigned users update
@@ -743,7 +741,7 @@ const updateTicket = async (req, res) => {
 
             console.log('Processing assigned emails:', updates.assignedToEmails);
             const assignedUsers = await User.find({
-                email: { $in: updates.assignedToEmails }
+                email: {$in: updates.assignedToEmails}
             });
 
             console.log('Found users:', assignedUsers.map(u => u.email));
@@ -846,12 +844,11 @@ const updateTicket = async (req, res) => {
 };
 
 
-
 // delete ticket
 const deleteTicket = async (req, res) => {
     console.log("DELETE ticket endpoint hit");
     try {
-        const { ticketId } = req.params;
+        const {ticketId} = req.params;
 
         if (!mongoose.Types.ObjectId.isValid(ticketId)) {
             return res.status(400).send("Invalid ticket ID.");
@@ -890,7 +887,7 @@ const getTicketAssignees = async (req, res) => {
         // 1. Find the ticket by ID and populate both name and email
         const ticket = await Ticket.findById(ticketId).populate("assignedTo", "name email");
         if (!ticket) {
-            return res.status(404).json({ message: 'Ticket not found' });
+            return res.status(404).json({message: 'Ticket not found'});
         }
 
         // 2. Extract the name and email of each assignee
@@ -907,16 +904,15 @@ const getTicketAssignees = async (req, res) => {
 
     } catch (error) {
         console.error("Error fetching assignees:", error);
-        res.status(500).json({ message: 'Server error', error: error.message });
+        res.status(500).json({message: 'Server error', error: error.message});
     }
 };
 
 
-
 const assignUserToTicket = async (req, res) => {
     try {
-        const { ticketId } = req.params;
-        const { email } = req.body;
+        const {ticketId} = req.params;
+        const {email} = req.body;
 
         if (!mongoose.Types.ObjectId.isValid(ticketId)) {
             return res.status(400).send("Invalid ticket ID.");
@@ -927,7 +923,7 @@ const assignUserToTicket = async (req, res) => {
             return res.status(404).send("Ticket not found.");
         }
 
-        const user = await User.findOne({ email });
+        const user = await User.findOne({email});
         if (!user) {
             return res.status(404).send("User not found.");
         }
@@ -968,12 +964,11 @@ const assignUserToTicket = async (req, res) => {
 };
 
 
-
 //remove user from the ticket
 const removeUserFromTicket = async (req, res) => {
     try {
-        const { ticketId } = req.params;
-        const { email } = req.body;
+        const {ticketId} = req.params;
+        const {email} = req.body;
 
         if (!mongoose.Types.ObjectId.isValid(ticketId)) {
             return res.status(400).send("Invalid ticket ID.");
@@ -984,7 +979,7 @@ const removeUserFromTicket = async (req, res) => {
             return res.status(404).send("Ticket not found.");
         }
 
-        const user = await User.findOne({ email });
+        const user = await User.findOne({email});
         if (!user) {
             return res.status(404).send("User not found.");
         }
@@ -1012,11 +1007,11 @@ const removeUserFromTicket = async (req, res) => {
 // Get all notifications for a user
 const getNotifications = async (req, res) => {
     try {
-        const { userId } = req.params;
-        const notifications = await Notifications.find({ userId }).sort({ createdAt: -1 });
+        const {userId} = req.params;
+        const notifications = await Notifications.find({userId}).sort({createdAt: -1});
         res.status(200).json(notifications);
     } catch (err) {
-        res.status(500).json({ error: 'Failed to fetch notifications' });
+        res.status(500).json({error: 'Failed to fetch notifications'});
     }
 };
 
@@ -1024,7 +1019,7 @@ const getNotifications = async (req, res) => {
 //notifications which are triggered from frontend
 const createNotification = async (req, res) => {
     try {
-        const { userId, type, message } = req.body;
+        const {userId, type, message} = req.body;
         const notification = new Notifications({
             userId,
             type,
@@ -1043,11 +1038,10 @@ const createNotification = async (req, res) => {
 };
 
 
-
 // Mark as read notification
 const markNotificationRead = async (req, res) => {
     try {
-        const { notificationId } = req.params;
+        const {notificationId} = req.params;
         const userId = req.user.id;
 
         if (!mongoose.Types.ObjectId.isValid(notificationId)) {
@@ -1067,7 +1061,7 @@ const markNotificationRead = async (req, res) => {
         notification.read = true;
         await notification.save();
 
-        res.status(200).json({ message: "Notification marked as read", notification });
+        res.status(200).json({message: "Notification marked as read", notification});
     } catch (error) {
         console.error("Error marking notification as read:", error);
         res.status(500).send("Error updating notification.");
@@ -1078,7 +1072,7 @@ const markNotificationRead = async (req, res) => {
 // Delete notification
 const deleteNotification = async (req, res) => {
     try {
-        const { notificationId } = req.params;
+        const {notificationId} = req.params;
         const notification = await Notifications.findByIdAndDelete(notificationId);
 
         if (!notification) return res.status(404).send("Notification not found.");
@@ -1093,7 +1087,7 @@ const deleteNotification = async (req, res) => {
 };
 
 
-const { OpenAI } = require("openai"); // Assuming you are using the OpenAI library.
+const {OpenAI} = require("openai"); // Assuming you are using the OpenAI library.
 
 const openai = new OpenAI({
     apiKey: process.env.OPENAI_API_KEY, // Make sure your API key is set correctly
@@ -1101,8 +1095,8 @@ const openai = new OpenAI({
 
 // AI assistant, task assigner
 const generateTicketsFromPrompt = async (req, res) => {
-    const { boardId } = req.params;
-    const { description } = req.body;
+    const {boardId} = req.params;
+    const {description} = req.body;
 
     try {
         // Populate both members and owner with their professions
@@ -1111,11 +1105,11 @@ const generateTicketsFromPrompt = async (req, res) => {
             .populate('owner', 'email profession name');
 
         if (!board) {
-            return res.status(404).json({ message: "Board not found" });
+            return res.status(404).json({message: "Board not found"});
         }
 
         if (!description || description.trim().length < 10) {
-            return res.status(400).json({ message: "Task description is too short." });
+            return res.status(400).json({message: "Task description is too short."});
         }
 
         const aiResponse = await openai.chat.completions.create({
@@ -1195,33 +1189,32 @@ const generateTicketsFromPrompt = async (req, res) => {
 
     } catch (err) {
         console.error("AI Task Gen Error:", err.response?.data || err.message, err.stack);
-        res.status(500).json({ message: "Internal server error during AI task generation." });
+        res.status(500).json({message: "Internal server error during AI task generation."});
     }
 };
-
 
 
 // Add comment
 const addComment = async (req, res) => {
     try {
         const ticketId = req.params.ticketId;
-        const { userId, text } = req.body;
+        const {userId, text} = req.body;
         const file = req.file;
 
         // 1. Find the ticket
         const ticket = await Ticket.findById(ticketId);
-        if (!ticket) return res.status(404).json({ message: 'Ticket not found' });
+        if (!ticket) return res.status(404).json({message: 'Ticket not found'});
 
         // 2. Get the board and check membership
         const board = await Board.findById(ticket.boardId);
-        if (!board) return res.status(404).json({ message: 'Board not found' });
+        if (!board) return res.status(404).json({message: 'Board not found'});
 
         // 3. Check if the user is either a member or the owner of the board
         const isMember = board.members.includes(userId);
         const isOwner = board.owner.equals(userId);
 
         if (!isMember && !isOwner) {
-            return res.status(403).json({ message: 'You must be a member or the owner of the board to comment' });
+            return res.status(403).json({message: 'You must be a member or the owner of the board to comment'});
         }
 
         // 4. Create the comment
@@ -1241,7 +1234,7 @@ const addComment = async (req, res) => {
         // Create a list of users to notify (excluding the user who posted the comment)
         const usersToNotify = new Set([...assignedUsers, boardOwner]);
 
-        usersToNotify.forEach(async (assignedUserId) => {
+        for (const assignedUserId of usersToNotify) {
             if (!assignedUserId.equals(userId)) { // Avoid sending a notification to the commenter
                 const notification = new Notifications({
                     userId: assignedUserId,
@@ -1257,31 +1250,28 @@ const addComment = async (req, res) => {
                 if (io) io.to(assignedUserId.toString()).emit('new-notification', notification);
                 console.log("Notification sent to user:", assignedUserId);
             }
-        });
+        }
 
         res.status(201).json(newComment);
 
     } catch (error) {
-        res.status(500).json({ message: 'Server error', error: error.message });
+        res.status(500).json({message: 'Server error', error: error.message});
     }
 };
-
-
-
 
 
 // get comments for a ticket
 const getCommentsForTicket = async (req, res) => {
     try {
-        const { ticketId } = req.params;
+        const {ticketId} = req.params;
 
-        const comments = await Comment.find({ ticketId })
+        const comments = await Comment.find({ticketId})
             .populate({
                 path: 'userId',
                 select: 'name email',
                 model: 'User'
             })
-            .sort({ createdAt: -1 });
+            .sort({createdAt: -1});
 
         // Rename userId to user in the response
         const formattedComments = comments.map(comment => ({
@@ -1292,7 +1282,7 @@ const getCommentsForTicket = async (req, res) => {
         res.status(200).json(formattedComments);
     } catch (error) {
         console.error('Error fetching comments:', error);
-        res.status(500).json({ message: 'Server Error' });
+        res.status(500).json({message: 'Server Error'});
     }
 };
 
@@ -1300,21 +1290,21 @@ const getCommentsForTicket = async (req, res) => {
 // Delete the comment (only owner can)
 const deleteComment = async (req, res) => {
     try {
-        const { ticketId, commentId } = req.params;
+        const {ticketId, commentId} = req.params;
 
         // Find the comment
-        const comment = await Comment.findOne({ _id: commentId, ticketId });
+        const comment = await Comment.findOne({_id: commentId, ticketId});
 
         if (!comment) {
-            return res.status(404).json({ message: 'Comment not found' });
+            return res.status(404).json({message: 'Comment not found'});
         }
 
-        await Comment.deleteOne({ _id: commentId });
+        await Comment.deleteOne({_id: commentId});
 
-        res.status(200).json({ message: 'Comment deleted successfully' });
+        res.status(200).json({message: 'Comment deleted successfully'});
     } catch (error) {
         console.error('Error deleting comment:', error);
-        res.status(500).json({ message: 'Server Error' });
+        res.status(500).json({message: 'Server Error'});
     }
 };
 
@@ -1324,12 +1314,12 @@ const generateDailyStandup = async (req, res) => {
 
     try {
         // Fetch the user's tickets using the existing getMyTickets function
-        const tickets = await Ticket.find({ assignedTo: userId })
+        const tickets = await Ticket.find({assignedTo: userId})
             .populate("boardId", "name")
             .select("-__v");
 
         if (!tickets.length) {
-            return res.status(404).json({ message: "No tickets assigned to this user." });
+            return res.status(404).json({message: "No tickets assigned to this user."});
         }
 
         // Prepare task information for the AI with formatted deadline
@@ -1372,18 +1362,18 @@ const generateDailyStandup = async (req, res) => {
 
     } catch (err) {
         console.error("AI Standup Error:", err.response?.data || err.message, err.stack);
-        res.status(500).json({ message: "Internal server error during AI standup generation." });
+        res.status(500).json({message: "Internal server error during AI standup generation."});
     }
 };
 
 const uploadPicture = async (req, res) => {
     try {
         if (!req.file) {
-            return res.status(400).json({ message: 'No file uploaded.' });
+            return res.status(400).json({message: 'No file uploaded.'});
         }
 
         if (!req.user || !req.user._id) {
-            return res.status(401).json({ message: 'Authentication required' });
+            return res.status(401).json({message: 'Authentication required'});
         }
 
         // Correct path - use the actual path from req.file
@@ -1392,8 +1382,8 @@ const uploadPicture = async (req, res) => {
         // Update user
         const user = await User.findByIdAndUpdate(
             req.user._id,
-            { profileImage: filePath },
-            { new: true }
+            {profileImage: filePath},
+            {new: true}
         );
 
         res.status(200).json({
@@ -1417,7 +1407,7 @@ const getUserCalendarEvents = async (req, res) => {
         const userId = req.user._id;
 
         // Fetch only necessary fields and populate board name
-        const tickets = await Ticket.find({ assignedTo: userId })
+        const tickets = await Ticket.find({assignedTo: userId})
             .select('title deadline boardId') // Select only needed fields
             .populate({
                 path: 'boardId',
@@ -1434,14 +1424,14 @@ const getUserCalendarEvents = async (req, res) => {
         res.json(events);
     } catch (error) {
         console.error('Error fetching calendar events:', error);
-        res.status(500).json({ error: 'Internal server error' });
+        res.status(500).json({error: 'Internal server error'});
     }
 };
 
 // google calendar
 async function createEvent(eventDetails) {
     try {
-        const calendar = google.calendar({ version: 'v3', auth: oauth2Client });
+        const calendar = google.calendar({version: 'v3', auth: oauth2Client});
 
         const event = {
             summary: eventDetails.summary,
