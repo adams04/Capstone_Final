@@ -21,7 +21,7 @@
   .custom-calendar {
     width: 100%;
     max-width: 600px;
-    background: #252927;
+    background: var(--card-bg);
     border: 1px solid #333;
     border-radius: 8px;
     padding: 15px;
@@ -37,13 +37,8 @@
     min-width: 44px;
     background: none;
     border: none;
-    color: #B9B9B9;
+    color: var(--text-header);
     font-size: 1rem;
-  }
-  
-  .react-calendar__navigation button:enabled:hover,
-  .react-calendar__navigation button:enabled:focus {
-    background-color: #363937;
   }
   
   .react-calendar__month-view__weekdays {
@@ -51,7 +46,7 @@
     text-transform: uppercase;
     font-weight: bold;
     font-size: 0.75em;
-    color: #B9B9B9;
+    color: var(--text-header);
   }
   
   .react-calendar__month-view__weekdays__weekday {
@@ -60,11 +55,11 @@
   
   .react-calendar__month-view__days__day {
     padding: 0.5em;
-    color: #B9B9B9;
+    color: var(--text-header);
   }
   
   .react-calendar__month-view__days__day--weekend {
-    color: #E81352;
+    color: #B50D8A;
   }
   
   .react-calendar__tile {
@@ -78,7 +73,7 @@
   
   .react-calendar__tile:enabled:hover,
   .react-calendar__tile:enabled:focus {
-    background-color: #363937;
+    background-color: var(--input-modal);
     border-radius: 4px;
   }
   
@@ -117,7 +112,7 @@
   
   .events-panel {
     flex: 1;
-    background: #252927;
+    background: var(--card-bg);
     border-radius: 8px;
     padding: 20px;
     border: 1px solid #333;
@@ -125,7 +120,7 @@
   }
   
   .events-panel h3 {
-    color: #B9B9B9;
+    color: var(--text-header);
     margin-bottom: 15px;
     font-size: 1.1rem;
     border-bottom: 1px solid #333;
@@ -138,7 +133,7 @@
   }
   
   .event-item {
-    background: #363937;
+    background: var(--input-modal);
     border-radius: 6px;
     padding: 12px;
     margin-bottom: 10px;
@@ -147,18 +142,18 @@
   
   .event-title {
     font-weight: 500;
-    color: #B9B9B9;
+    color: var(--text-header);
     margin-bottom: 5px;
   }
   
   .event-board,
   .event-deadline {
     font-size: 0.85rem;
-    color: #888;
+    color: var(--text-description);
   }
   
   .no-events {
-    color: #888;
+    color: var(--text-description);
     text-align: center;
     padding: 20px 0;
   }
@@ -187,7 +182,7 @@
 }
 
 .calendar-title {
-  color: var(--accent);
+  color: #B50D8A;
   margin-bottom: 20px;
   font-size: 1.5rem;
 }
@@ -198,91 +193,7 @@
   margin-top: 20px;
 }
 
-.custom-calendar {
-  width: 100%;
-  max-width: 600px;
-  background: var(--card-bg);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 15px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-}
 
-.react-calendar__navigation button {
-  min-width: 44px;
-  background: none;
-  border: none;
-  color: var(--text-muted);
-  font-size: 1rem;
-}
-
-.react-calendar__navigation button:enabled:hover,
-.react-calendar__navigation button:enabled:focus {
-  background-color: var(--bg);
-}
-
-.react-calendar__month-view__weekdays {
-  color: var(--text-muted);
-}
-
-.react-calendar__month-view__days__day {
-  color: var(--text-muted);
-}
-
-.react-calendar__month-view__days__day--weekend {
-  color: #E81352;
-}
-
-.react-calendar__tile:enabled:hover,
-.react-calendar__tile:enabled:focus {
-  background-color: var(--bg);
-}
-
-.react-calendar__tile--now {
-  background: #4E01FD;
-  color: white;
-}
-
-.react-calendar__tile--active {
-  background: var(--accent);
-  color: white;
-}
-
-.event-dot {
-  background-color: var(--accent);
-}
-
-.has-events {
-  background-color: rgba(181, 13, 138, 0.1);
-}
-
-.events-panel {
-  background: var(--card-bg);
-  border: 1px solid var(--border);
-}
-
-.events-panel h3 {
-  color: var(--text-muted);
-  border-bottom: 1px solid var(--border);
-}
-
-.event-item {
-  background: var(--bg);
-  border-left: 3px solid var(--accent);
-}
-
-.event-title {
-  color: var(--text-muted);
-}
-
-.event-board,
-.event-deadline {
-  color: var(--text-muted);
-}
-
-.no-events {
-  color: var(--text-muted);
-}
 
 /* Responsive styles */
 @media (max-width: 768px) {
@@ -290,3 +201,4 @@
     margin-left: 0;
   }
 }
+

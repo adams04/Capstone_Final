@@ -43,6 +43,14 @@ const SettingsPage = () => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
 
+  const professions = [
+    { value: 'developer', label: 'Developer' },
+    { value: 'designer', label: 'Designer' },
+    { value: 'project-manager', label: 'Project Manager' },
+    { value: 'qa-engineer', label: 'QA Engineer' },
+    { value: 'devops', label: 'DevOps' }
+  ];
+
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
@@ -264,14 +272,19 @@ const SettingsPage = () => {
 
             <div className="form-group">
               <label>Profession</label>
-              <input
-                type="text"
+              <select
                 name="profession"
                 value={formData.profession}
                 onChange={handleInputChange}
-              />
+                className="profession-select"
+              >
+                {professions.map((profession) => (
+                  <option key={profession.value} value={profession.value}>
+                    {profession.label}
+                  </option>
+                ))}
+              </select>
             </div>
-
             <div className="form-group">
               <label>Date of Birth</label>
               <DatePicker

@@ -11,23 +11,29 @@ body {
 }
 
 :root {
-  /* Light theme variables - Enhanced contrast */
-  --bg-light: #E5E5E5;
-  --card-bg-light: #CCCCCC;
-  --text-muted-light: #495057;
-  --border-light: #dee2e6;
-  --task-dragging-light: #FFE6F9;
-  --column-dragging-light: #c670b1;  
+  /* Light theme variables */
+  --bg-light: #f5f7fa;
+  --card-bg-light: #ffffff;
+  --text-header-light: #2d3748;
+  --text-descriptions-light: #4a5568;
+  --text-muted-light: #718096;
+  --task-dragging-light: #f0f4ff;
+  --column-dragging-light: #e9d8fd;
+  --input-modal-light: #edf2f7;
+  --modal-bg-light: #ffffff;
   
-  /* Dark theme variables - More vibrant */
+  /* Dark theme variables - Keep existing values */
   --bg-dark: #121212;
-  --card-bg-dark: #1e1e1e;
-  --text-muted-dark: #adb5bd;
-  --border-dark: #2d2d2d;
-  --task-dragging-dark: #300525; 
+  --card-bg-dark: #252927;
+  --text-header-dark: #B9B9B9;
+  --text-descriptions-dark: #cccccc;
+  --text-muted-dark: #888888;
+  --task-dragging-dark: #300525;
   --column-dragging-dark: #6c0452;
+  --input-modal-dark: #363937;
+  --modal-bg-dark: #252927;
   
-  /* Common variables */
+  /* Common variables (unchanged) */
   --accent: #B50D8A;
   --primary: #4E01FD;
   --secondary: #E81352;
@@ -39,24 +45,35 @@ body {
 body.light {
   --bg: var(--bg-light);
   --card-bg: var(--card-bg-light);
+  --text-header: var(--text-header-light);
+  --text-description: var(--text-descriptions-light);
   --text-muted: var(--text-muted-light);
-  --border: var(--border-light);
   --task-dragging: var(--task-dragging-light);
   --column-dragging: var(--column-dragging-light);
+  --input-modal: var(--input-modal-light);
+  --modal-bg: var(--modal-bg-light);
 }
 
 body.dark {
   --bg: var(--bg-dark);
   --card-bg: var(--card-bg-dark);
+  --text-header: var(--text-header-dark);
+  --text-description: var(--text-descriptions-dark);
   --text-muted: var(--text-muted-dark);
   --border: var(--border-dark);
   --task-dragging: var(--task-dragging-dark);
   --column-dragging: var(--column-dragging-dark);
+  --input-modal: var(--input-modal-dark);
+  --button-bg: var(--button-bg-dark);
+  --button-text: var(--button-text-dark);
+  --button-hover: var(--button-hover-dark);
+  --modal-bg: var(--modal-bg-dark);
+  --modal-border: var(--modal-border-dark);
 }
 
 body {
   background-color: var(--bg);
-  color: var(--text);
+  color: var(--text-header);
   transition: background-color 0.3s ease, color 0.3s ease;
 }
 
@@ -68,6 +85,12 @@ a {
 
 button {
   transition: all 0.2s ease;
+  background-color: var(--button-bg);
+  color: var(--button-text);
+}
+
+button:hover {
+  background-color: var(--button-hover);
 }
 
 /* Scrollbar styles */

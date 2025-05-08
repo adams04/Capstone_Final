@@ -4,7 +4,7 @@
 /* ======================== */
 body {
   background-color: var(--bg);
-  color: var(--text-light);
+  color: var(--text-header);
 }
 
 /* Main content area with sidebar offset */
@@ -31,7 +31,7 @@ body {
   padding: 1.5rem;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
   transition: transform 0.2s, box-shadow 0.2s;
-  border: 1px solid var(--border-dark);
+  border: 1px solid var(--card-bg);
   position: relative;
   cursor: pointer;
   transition: transform 0.2s, box-shadow 0.2s;
@@ -48,12 +48,12 @@ body {
 }
 
 .project-name {
-  color: var(--text-muted);
+  color: var(--text-header);
   margin-bottom: 0.5rem;
 }
 
 .project-description {
-  color: var(--text-muted);
+  color: var(--text-header);
   margin-bottom: 1rem;
   font-size: 0.9rem;
 }
@@ -65,7 +65,7 @@ body {
   align-items: center;
   margin-top: 1rem;
   padding-top: 1rem;
-  border-top: 1px solid var(--border-dark);
+  border-top: 1px solid var(--card-bg);
   color: var(--accent);
 }
 
@@ -75,7 +75,7 @@ body {
 /* Shared button styles */
 .sort-trigger, 
 .add-project-btn {
-  border: 1px solid var(--border-dark);
+  border: 1px solid var(--card-bg);
   border-radius: 6px;
   padding: 0.75rem 1.5rem;
   font-size: 0.9rem;
@@ -98,7 +98,7 @@ body {
 
 .sort-trigger {
   background: var(--card-bg);
-  color: var(--text-light);
+  color: var(--text-header);
   border-color: #595959;
 }
 
@@ -143,7 +143,7 @@ body {
   justify-content: space-between;
   background: transparent;
   border: none;
-  color: var(--text-light);
+  color: var(--text-description);
   padding: 0.75rem 1rem;
   cursor: pointer;
   text-align: left;
@@ -166,7 +166,7 @@ body {
   border: none;
   border-radius: 4px;
   padding: 0.3rem;
-  color: var(--text-muted);
+  color: var(--text-header);
   cursor: pointer;
   transition: color 0.2s;
   display: flex;
@@ -175,14 +175,14 @@ body {
 }
 
 .project-actions button:hover {
-  color: white;
+  color: var(--text-description);
   background: rgba(255, 255, 255, 0.2);
 }
 
 .add-member-btn {
   background: transparent;
   border: none;
-  color: var(--accent);
+  color: #B50D8A;
   display: flex;
   align-items: center;
   gap: 0.3rem;
@@ -253,14 +253,14 @@ body {
   width: 90%;
   max-width: 400px;
   text-align: center;
-  color: var(--text-light);
+  color: var(--text-description);
 }
 
 /* Modal headings */
 .create-modal h2,
 .edit-modal h2,
 .delete-modal h3 {
-  color: #B9B9B9;
+  color: var(--text-header);
   margin-bottom: 0.75rem;
 }
 
@@ -268,7 +268,7 @@ body {
 .create-modal p,
 .edit-modal p,
 .delete-modal p {
-  color: var(--text-muted);
+  color: var(--text-header);
   margin-bottom: 1.5rem;
 }
 
@@ -280,8 +280,8 @@ body {
   border-radius: 5px;
   font-size: 1rem;
   border: none;
-  background-color: #2a2a2a;
-  color: white;
+  background-color: var(--input-modal);
+  color: var(--text-description);
 }
 
 .input-spacer {
@@ -302,14 +302,22 @@ body {
 .edit-cancel-btn,
 .add-member-cancel-btn,
 .delete-cancel-btn {
-  background: #333 !important;
-  color: white !important;
-  border: none;
+  background: var(--card-bg);
+  color: var(--text-header);
+  border: 1px solid #444;
   border-radius: 5px;
   padding: 0.8rem 1.5rem;
   font-weight: 600;
   cursor: pointer;
   flex: 1;
+}
+
+.create-cancel-btn:hover,
+.edit-cancel-btn:hover,
+.add-member-cancel-btn:hover,
+.delete-cancel-btn:hover {
+  background: #444;
+  color:#e0e0e0;
 }
 
 .create-submit-btn,
@@ -339,17 +347,17 @@ body {
 /* ======================== */
 
 .members-modal {
-  background: var(--card-bg);
+  background: var(--input-modal);
   border-radius: 16px;
   padding: 2rem;
   width: 90%;
   max-width: 500px;
-  color: var(--text-light);
+  color: var(--text-description);
   z-index: 7000;
 }
 
 .members-modal h2 {
-  color: #B9B9B9;
+  color: var(--text-header);
   margin-bottom: 1rem;
 }
 
@@ -359,14 +367,14 @@ body {
   border-radius: 8px;
   border: 1px solid var(--border-dark);
   background-color: #2a2a2a;
-  color: white;
+  color: var(--text-description);
   margin-bottom: 0.3rem;
 }
 
 .add-member-btn {
   background: none;
   border: none;
-  color: var(--accent);
+  color: #B50D8A;
   cursor: pointer;
   padding: 0.3rem 0;
   margin-bottom: 0.5rem;
@@ -386,7 +394,7 @@ body {
   align-items: center;
   padding: 1rem;
   gap: 1rem;
-  border-bottom: 1px solid var(--border-dark);
+  border-bottom: 1px solid var(--card-bg);
 }
 
 .member-item:last-child {
@@ -397,7 +405,7 @@ body {
   min-width: 18px;
   min-height: 18px;
   margin-right: 1rem;
-  accent-color: var(--accent);
+  accent-color: #B50D8A;
 }
 
 .member-details {
@@ -408,12 +416,12 @@ body {
 
 .member-name {
   font-weight: 500;
-  color: var(--text-light);
+  color: var(--text-description);
   margin-bottom: 0.25rem;
 }
 
 .member-email {
-  color: var(--text-muted);
+  color: var(--text-header);
   font-size: 0.85rem;
   opacity: 0.8;
 }
@@ -427,12 +435,12 @@ body {
   gap: 1rem;
   margin-top: 1.5rem;
   padding-top: 1.5rem;
-  border-top: 1px solid var(--border-dark);
+  border-top: 1px solid var(--card-bg);
 }
 
 .close-btn {
-  background: #333 !important;
-  color: white !important;
+  background: #333;
+  color: var(--text-description);
   border: none;
   border-radius: 5px;
   padding: 0.8rem 1.5rem;
@@ -443,7 +451,7 @@ body {
 
 .delete-btn {
   background: linear-gradient(90deg, #4E01FD 0%, #E81352 100%);
-  color: white;
+  color: var(--text-description);
   border: none;
   border-radius: 5px;
   padding: 0.8rem 1.5rem;
@@ -470,7 +478,7 @@ body {
 .error-message button {
   background: transparent;
   border: none;
-  color: var(--text-light);
+  color: var(--text-description);
   cursor: pointer;
 }
 
@@ -479,7 +487,7 @@ body {
   justify-content: center;
   align-items: center;
   height: 100vh;
-  color: var(--text-light);
+  color: var(--text-description);
 }
 
 /* ======================== */

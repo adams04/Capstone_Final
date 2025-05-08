@@ -31,7 +31,7 @@
 }
 
 .error-message {
-  color: #E81352;
+  color: #B50D8A;
   padding: 1rem;
   background-color: rgba(232, 19, 82, 0.1);
   border-radius: 8px;
@@ -72,7 +72,8 @@
 .upload-button {
   padding: 0.5rem 1rem;
   background: var(--card-bg);
-  color: var(--text-muted);
+  border: 1px solid #252927;
+  color: var(--text-header);
   border-radius: 4px;
   cursor: pointer;
   transition: all 0.2s;
@@ -103,7 +104,7 @@
 
 .form-group input {
   background: var(--card-bg);
-  color: var(--text-muted);
+  color: var(--text-header);
   padding: 0.8rem;
   border: 1px solid #252927;
   border-radius: 6px;
@@ -135,6 +136,29 @@
   border-color: #B50D8A;
 }
 
+/* Profession select dropdown styles */
+.profession-select {
+  width: 100%;
+  padding: 12px;
+  border-radius: 6px;
+  border: 1px solid #252927;
+  background-color: var(--card-bg);
+  color: var(--text-header);
+  font-size: 1rem;
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%23B50D8A' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  padding-right: 36px;
+}
+
+.profession-select:focus {
+  outline: none;
+  border-color: #B50D8A;
+  box-shadow: 0 0 0 2px rgba(181, 13, 138, 0.2);
+}
+
 .save-button {
   padding: 0.8rem 1.5rem;
   background: linear-gradient(90deg, #4E01FD 0%, #E81352 100%);
@@ -163,22 +187,22 @@
 /* DatePicker specific styles */
 .date-picker-input {
   padding: 0.8rem;
-  border: 1px solid #252927;
+  border: 1px solid var(--bg);
   border-radius: 6px;
   font-size: 1rem;
-  background-color: #252927;
-  color: #B9B9B9;
+  background-color: var(--card-bg);
+  color: var(--text-header);
   width: 100%;
 }
 
 .react-datepicker {
   font-family: inherit;
-  background-color: #252927;
+  background-color: var(--card-bg);
   border: 1px solid #444;
 }
 
 .react-datepicker__header {
-  background-color: #363937;
+  background-color: var(--input-modal);
   border-bottom: 1px solid #444;
 }
 
@@ -198,7 +222,7 @@
 }
 
 .react-datepicker__year-dropdown {
-  background-color: #252927;
+  background-color: var(--card-bg);
   border: 1px solid #444;
 }
 
@@ -226,7 +250,7 @@ z-index: 1000;
 
 .password-modal {
 background: var(--card-bg);
-color: var(--text-muted);
+color: var(--text-header);
 border-radius: 12px;
 padding: 2rem;
 width: 100%;
@@ -253,14 +277,14 @@ h3 {
 .close-modal-btn {
 background: none;
 border: none;
-color: #B9B9B9;
+color: var(--text-header);
 font-size: 1.5rem;
 cursor: pointer;
 padding: 0.5rem;
 transition: color 0.2s;
 
 &:hover {
-  color: #E81352;
+  color: #B50D8A;
 }
 }
 
@@ -276,7 +300,7 @@ position: relative;
 
 input {
   background: var(--card-bg);
-  color: var(--text-muted);
+  color: var(--text-header);
   border: 1px solid #444;
   padding: 0.8rem;
   padding-right: 40px;
@@ -298,7 +322,7 @@ top: 50%;
 transform: translateY(-50%);
 background: none;
 border: none;
-color: var(--text-muted);
+color: var(--text-header);
 cursor: pointer;
 padding: 5px;
 transition: color 0.2s;
@@ -326,11 +350,12 @@ transition: all 0.2s;
 
 &.cancel-btn {
   background: var(--card-bg);
-  color: var(--text-muted);
+  color: var(--text-header);
   border: 1px solid #444;
   
   &:hover {
-    background: #444;
+    background-color: #444;
+    color:#e0e0e0;
   }
 }
 
@@ -363,6 +388,6 @@ border-radius: 6px;
 font-size: 1rem;
 transition: all 0.2s;
 background: var(--card-bg);
-color: var(--text-muted);
+color: var(--text-header);
 margin-top: 10px;
 }
