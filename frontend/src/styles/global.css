@@ -1,11 +1,90 @@
 /* Reset and base styles */
 * {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-  }
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Segoe UI', sans-serif;
+  line-height: 1.6;
+}
+
+:root {
+  /* Light theme variables - Enhanced contrast */
+  --bg-light: #E5E5E5;
+  --card-bg-light: #CCCCCC;
+  --text-muted-light: #495057;
+  --border-light: #dee2e6;
+  --task-dragging-light: #FFE6F9;
+  --column-dragging-light: #c670b1;  
   
-  body {
-    font-family: 'Segoe UI', sans-serif;
-    line-height: 1.6;
-  }
+  /* Dark theme variables - More vibrant */
+  --bg-dark: #121212;
+  --card-bg-dark: #1e1e1e;
+  --text-muted-dark: #adb5bd;
+  --border-dark: #2d2d2d;
+  --task-dragging-dark: #300525; 
+  --column-dragging-dark: #6c0452;
+  
+  /* Common variables */
+  --accent: #B50D8A;
+  --primary: #4E01FD;
+  --secondary: #E81352;
+  --danger: #ff6b6b;
+  --primary-gradient: linear-gradient(90deg, var(--primary) 0%, var(--secondary) 100%);
+}
+
+/* Apply theme variables based on body class */
+body.light {
+  --bg: var(--bg-light);
+  --card-bg: var(--card-bg-light);
+  --text-muted: var(--text-muted-light);
+  --border: var(--border-light);
+  --task-dragging: var(--task-dragging-light);
+  --column-dragging: var(--column-dragging-light);
+}
+
+body.dark {
+  --bg: var(--bg-dark);
+  --card-bg: var(--card-bg-dark);
+  --text-muted: var(--text-muted-dark);
+  --border: var(--border-dark);
+  --task-dragging: var(--task-dragging-dark);
+  --column-dragging: var(--column-dragging-dark);
+}
+
+body {
+  background-color: var(--bg);
+  color: var(--text);
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Common styles for both themes */
+a {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+button {
+  transition: all 0.2s ease;
+}
+
+/* Scrollbar styles */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--text-muted);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--accent);
+}

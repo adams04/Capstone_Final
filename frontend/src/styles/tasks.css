@@ -72,8 +72,8 @@
 }
 
 .column.drop-target {
-    background: #6c0452;
-    outline: 1.5px #7b035d;
+    background: var(--column-dragging);
+    outline: 1.5px var(--column-dragging);
 }
 
 .column-header {
@@ -100,6 +100,7 @@
     cursor: grab;
     transition: transform 0.2s, box-shadow 0.2s;
     position: relative;
+    border: px solid var(--border-dark);
 }
 
 .task-card:hover {
@@ -113,7 +114,7 @@
 
 .task-card.dragging {
     opacity: 0.5;
-    background-color: #300525;
+    background-color: var(--task-dragging);
     transform: scale(0.98);
 }
 
@@ -932,4 +933,212 @@ input[type="date"]:focus {
   opacity: 0.7;
   cursor: not-allowed;
 }
+/* BOARD HEADER STYLES */
+.content-area > .board-header {
+  background: var(--card-bg);
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
 
+.content-area > .board-header .board-title {
+  color: var(--accent);
+}
+
+/* Main content area */
+.tasks-container {
+  background: var(--bg);
+}
+
+/* Individual column */
+.column {
+  background: var(--card-bg);
+}
+
+.column-header {
+  border-bottom: 2px solid var(--text-muted);
+}
+
+.column-title {
+  color: var(--text-muted);
+}
+
+/* Task cards */
+.task-card {
+  background: var(--card-bg);
+}
+
+.task-title {
+  color: var(--text-muted);
+}
+
+.task-description {
+  color: var(--text-muted);
+}
+
+.task-deadline {
+  color: var(--text-muted);
+}
+
+/* Modal styles */
+.create-task-modal {
+  background: var(--card-bg);
+  color: var(--text);
+}
+
+.create-task-modal h2 {
+  color: var(--text-muted);
+}
+
+.modal-input {
+  background-color: var(--card-bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+
+/* Members modal */
+.members-task-modal {
+  background: var(--card-bg);
+  color: var(--text);
+}
+
+.members-task-search {
+  background-color: var(--card-bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+
+.member-task-item {
+  border-bottom: 1px solid var(--border);
+}
+
+.member-task-name {
+  color: var(--text-muted);
+}
+
+.member-task-email {
+  color: var(--text-muted);
+}
+
+/* Comments Modal */
+.comments-modal {
+  background: var(--card-bg);
+  color: var(--text);
+}
+
+.comment-item {
+  background: var(--card-bg);
+}
+
+.comment-input {
+  background-color: var(--card-bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+
+/* AI Chatbot */
+.ai-chat-window {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+}
+
+.ai-messages-container {
+  background: var(--card-bg);
+}
+
+.ai-input-container {
+  background: var(--card-bg);
+  border-top: 1px solid var(--border);
+}
+
+.ai-input-container input {
+  background: var(--bg);
+  color: var(--text);
+}
+
+/* tasks.css */
+.board-header {
+  background: var(--card-bg);
+}
+
+.add-task-button {
+  background: var(--primary-gradient);
+}
+
+.board-title {
+  color: var(--accent);
+}
+
+.column {
+  background: var(--card-bg);
+}
+
+.column-header {
+  border-bottom: 2px solid var(--text-muted);
+}
+
+.column-title {
+  color: var(--text-muted);
+}
+
+.task-card {
+  background: var(--card-bg);
+}
+
+.task-title,
+.task-description,
+.task-deadline {
+  color: var(--text-muted);
+}
+
+.create-task-modal {
+  background: var(--card-bg);
+  color: var(--text);
+}
+
+.create-task-modal h2 {
+  color: var(--text-muted);
+}
+
+.modal-input {
+  background-color: var(--card-bg);
+  border: 1px solid var(--border);
+  color: var(--text);
+}
+
+.members-task-modal {
+  background: var(--card-bg);
+  color: var(--text);
+}
+
+.members-task-search {
+  background-color: var(--card-bg);
+  border: 1px solid var(--border);
+  color: var(--text);
+}
+
+.member-task-item {
+  border-bottom: 1px solid var(--border);
+}
+
+.member-task-name,
+.member-task-email {
+  color: var(--text-muted);
+}
+
+.comments-modal {
+  background: var(--card-bg);
+  color: var(--text);
+}
+
+.comment-item {
+  background: var(--card-bg);
+}
+
+.comment-input {
+  background-color: var(--card-bg);
+  border: 1px solid var(--border);
+  color: var(--text);
+}
+
+/* Keep priority styles as they are since they use rgba */
+
+/* Priority styles remain the same as they use rgba values */

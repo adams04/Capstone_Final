@@ -13,12 +13,13 @@ import { AuthProvider } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import { NotificationProvider } from './context/NotificationContext';
 import { SocketContext } from './context/SocketContext';
+import { ThemeProvider } from './context/ThemeContext'; 
+import './styles/global.css';
 
 function App() {
   const [socket, setSocket] = useState(null);
 
   useEffect(() => {
-    // Initialize socket connection when app loads
     const newSocket = io(process.env.REACT_APP_API_BASE_URL || 'http://localhost:5001', {
       autoConnect: false
     });
@@ -32,55 +33,57 @@ function App() {
   return (
     <SocketContext.Provider value={socket}>
       <BrowserRouter>
-        <AuthProvider>
-          <NotificationProvider socket={socket}>
-            <Routes>
-              <Route path="/" element={<LandingPage />} />
-              <Route path="/login" element={<LoginPage />} />
-              <Route path="/signup" element={<SignUpPage />} />
-              <Route 
-                path="/board" 
-                element={
-                  <ProtectedRoute>
-                    <BoardPage />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/settings" 
-                element={
-                  <ProtectedRoute>
-                    <SettingsPage />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/mytasks" 
-                element={
-                  <ProtectedRoute>
-                    <MyTasksPage />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/calendar" 
-                element={
-                  <ProtectedRoute>
-                    <CalendarPage />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/tasks/:boardId" 
-                element={
-                  <ProtectedRoute>
-                    <TasksPage />
-                  </ProtectedRoute>
-                } 
-              />
-            </Routes>
-          </NotificationProvider>
-        </AuthProvider>
+        <ThemeProvider> 
+          <AuthProvider>
+            <NotificationProvider socket={socket}>
+              <Routes>
+                <Route path="/" element={<LandingPage />} />
+                <Route path="/login" element={<LoginPage />} />
+                <Route path="/signup" element={<SignUpPage />} />
+                <Route 
+                  path="/board" 
+                  element={
+                    <ProtectedRoute>
+                      <BoardPage />
+                    </ProtectedRoute>
+                  } 
+                />
+                <Route 
+                  path="/settings" 
+                  element={
+                    <ProtectedRoute>
+                      <SettingsPage />
+                    </ProtectedRoute>
+                  } 
+                />
+                <Route 
+                  path="/mytasks" 
+                  element={
+                    <ProtectedRoute>
+                      <MyTasksPage />
+                    </ProtectedRoute>
+                  } 
+                />
+                <Route 
+                  path="/calendar" 
+                  element={
+                    <ProtectedRoute>
+                      <CalendarPage />
+                    </ProtectedRoute>
+                  } 
+                />
+                <Route 
+                  path="/tasks/:boardId" 
+                  element={
+                    <ProtectedRoute>
+                      <TasksPage />
+                    </ProtectedRoute>
+                  } 
+                />
+              </Routes>
+            </NotificationProvider>
+          </AuthProvider>
+        </ThemeProvider>
       </BrowserRouter>
     </SocketContext.Provider>
   );

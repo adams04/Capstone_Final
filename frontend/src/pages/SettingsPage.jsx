@@ -6,11 +6,12 @@ import {
 } from 'react-icons/fi';
 import DatePicker from "react-datepicker";
 import TopNavigation from './TopNavigation';
-import "react-datepicker/dist/react-datepicker.css";
+import { useTheme } from '../context/ThemeContext';
 import { settingsAPI } from '../services/api';
 import '../styles/settings.css';
 import '../styles/sidebar.css';
 import '../styles/top-navigation.css';
+import "react-datepicker/dist/react-datepicker.css";
 
 const SettingsPage = () => {
   const [startDate, setStartDate] = useState(null);
@@ -25,7 +26,6 @@ const SettingsPage = () => {
     dateOfBirth: '',
     profileImage: ''
   });
-  const [theme, setTheme] = useState('light');
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [passwordData, setPasswordData] = useState({
     oldPassword: '',
@@ -37,6 +37,8 @@ const SettingsPage = () => {
     newPassword: false,
     confirmPassword: false
   });
+  
+  const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
@@ -69,7 +71,6 @@ const SettingsPage = () => {
         if (userData.dateOfBirth) {
           setStartDate(new Date(userData.dateOfBirth));
         }
-        setTheme(userData.settings?.theme || 'light');
         setLoading(false);
       } catch (error) {
         setError('Failed to load user data');
@@ -86,7 +87,7 @@ const SettingsPage = () => {
   };
 
   const handleThemeChange = (selectedTheme) => {
-    setTheme(selectedTheme);
+    toggleTheme(selectedTheme);
   };
 
   const handleSubmit = async (e) => {

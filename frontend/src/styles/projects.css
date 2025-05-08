@@ -1,21 +1,9 @@
-/* ======================== */
-/* === ROOT VARIABLES === */
-/* ======================== */
-:root {
-  --bg-dark: #121212;
-  --card-bg: #1e1e1e;
-  --text-light: #e0e0e0;
-  --text-muted: #aaaaaa;
-  --accent: #B50D8A;
-  --border-dark: #333;
-  --danger: #ff6b6b;
-}
 
 /* ======================== */
 /* === BASE STYLES === */
 /* ======================== */
 body {
-  background-color: var(--bg-dark);
+  background-color: var(--bg);
   color: var(--text-light);
 }
 
@@ -60,7 +48,7 @@ body {
 }
 
 .project-name {
-  color: #B9B9B9;
+  color: var(--text-muted);
   margin-bottom: 0.5rem;
 }
 
