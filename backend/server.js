@@ -55,7 +55,7 @@ app.get("/download/comment/:filename", (req, res) => {
 });
 
 // Health
-router.get("/health", (req, res) => {
+app.get("/health", (req, res) => {
   res.status(200).json({ status: "ok", message: "Server is running" });
 });
 
