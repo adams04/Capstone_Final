@@ -1,12 +1,12 @@
-require('dotenv').config();
-const express = require('express');
-const cors = require('cors');
-const connectDB = require('./config/db');
-const authRoutes = require('./routes/routes');
-const https = require('https');
-const { Server } = require('socket.io');
-const path = require('path');
-const { setSocketInstance } = require('./controllers/controllers');
+require("dotenv").config();
+const express = require("express");
+const cors = require("cors");
+const connectDB = require("./config/db");
+const authRoutes = require("./routes/routes");
+const https = require("https");
+const { Server } = require("socket.io");
+const path = require("path");
+const { setSocketInstance } = require("./controllers/controllers");
 const { verify } = require("jsonwebtoken");
 
 const app = express();
@@ -20,36 +20,53 @@ setSocketInstance(io);
 connectDB();
 
 // Middleware
-app.use(cors({
-  origin: process.env.FRONTEND_URL,
-  credentials: true
-}));
+app.use(
+  cors({
+    origin: process.env.FRONTEND_URL,
+    credentials: true,
+  })
+);
 app.use(express.json());
 
 // Static file serving for viewing in browser (not download)
-app.use('/Uploads/comments', express.static(path.join(__dirname, 'Uploads/comments')));
+app.use(
+  "/Uploads/comments",
+  express.static(path.join(__dirname, "Uploads/comments"))
+);
 
-app.use('/profilePictures', express.static(path.join(__dirname, 'Uploads/profilePictures')));
+app.use(
+  "/profilePictures",
+  express.static(path.join(__dirname, "Uploads/profilePictures"))
+);
 
 // Route for downloading attachments
-app.get('/download/comment/:filename', (req, res) => {
-  const filePath = path.join(__dirname, 'Uploads/comments', req.params.filename);
+app.get("/download/comment/:filename", (req, res) => {
+  const filePath = path.join(
+    __dirname,
+    "Uploads/comments",
+    req.params.filename
+  );
   res.download(filePath, req.params.filename, (err) => {
     if (err) {
-      console.error('Download error:', err);
-      res.status(500).send('Could not download the file');
+      console.error("Download error:", err);
+      res.status(500).send("Could not download the file");
     }
   });
 });
 
+// Health
+router.get("/health", (req, res) => {
+  res.status(200).json({ status: "ok", message: "Server is running" });
+});
+
 // Routes
-app.use('/api/auth', authRoutes);
+app.use("/api/auth", authRoutes);
 
 // Web Socket
-io.on('connection', (socket) => {
-  console.log('A user connected:', socket.id);
+io.on("connection", (socket) => {
+  console.log("A user connected:", socket.id);
 
-  socket.on('authenticate', (token) => {
+  socket.on("authenticate", (token) => {
     verify(token, process.env.JWT_SECRET, (err, decoded) => {
       if (err) return socket.disconnect();
 
@@ -58,15 +75,15 @@ io.on('connection', (socket) => {
     });
   });
 
-  socket.on('disconnect', () => {
-    console.log('User disconnected:', socket.id);
+  socket.on("disconnect", () => {
+    console.log("User disconnected:", socket.id);
   });
 });
 
 // Global error handler
 app.use((err, req, res, next) => {
   console.error(err.stack);
-  res.status(500).json({ error: 'Internal server error' });
+  res.status(500).json({ error: "Internal server error" });
 });
 
 // Start server
