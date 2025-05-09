@@ -40,11 +40,6 @@ const {
   createEvent,
 } = require("../controllers/controllers");
 
-// Health
-router.get("/health", (req, res) => {
-  res.status(200).json({ status: "ok", message: "Server is running" });
-});
-
 // Calendar
 router.get("/calendar", authMiddleware, getUserCalendarEvents);
 
