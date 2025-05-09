@@ -22,23 +22,9 @@ setSocketInstance(io);
 connectDB();
 
 // Middleware
-// const allowedOrigins = [
-//   'http://localhost:3000',
-//   'https://taskflowfrontend-7j7zh72la-shoghers-projects-76c1b726.vercel.app'
-// ];
-//
-// app.use(cors({
-//   origin: (origin, callback) => {
-//     if (!origin || allowedOrigins.includes(origin)) {
-//       callback(null, true);
-//     } else {
-//       callback(new Error('Not allowed by CORS'));
-//     }
-//   },
-//   credentials: true
-// }));
 
 app.use(cors({ origin: '*' }));
+
 
 app.use(express.json());
 
