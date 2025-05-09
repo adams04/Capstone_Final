@@ -2,6 +2,13 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 
+try {
+    require('multer');
+    console.log('Multer is available');
+} catch (e) {
+    console.error('Multer missing:', e);
+}
+
 // Storage config
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
