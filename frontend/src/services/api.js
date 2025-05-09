@@ -1,14 +1,16 @@
 import axios from 'axios';
 
 const API = axios.create({
-  baseURL: process.env.NODE_ENV === 'development'
-    ? 'http://localhost:5001/api'
-    : '/api',
+  baseURL:
+      process.env.NODE_ENV === "development"
+          ? "http://localhost:5001/api"
+          : "https://taskflow-backend-nhjz.onrender.com/api",
   timeout: 10000,
   headers: {
-    'Content-Type': 'application/json',
-  }
+    "Content-Type": "application/json",
+  },
 });
+
 
 // Request interceptor
 API.interceptors.request.use(config => {
